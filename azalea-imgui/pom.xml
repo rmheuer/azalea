@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>azalea</artifactId>
+        <groupId>com.github.rmheuer</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>azalea-imgui</artifactId>
+
+    <properties>
+        <imgui.java.version>1.86.10</imgui.java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.github.rmheuer</groupId>
+            <artifactId>azalea-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.spair</groupId>
+            <artifactId>imgui-java-binding</artifactId>
+            <version>${imgui.java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.spair</groupId>
+            <artifactId>imgui-java-lwjgl3</artifactId>
+            <version>${imgui.java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.spair</groupId>
+            <artifactId>imgui-java-natives-linux</artifactId>
+            <version>${imgui.java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.spair</groupId>
+            <artifactId>imgui-java-natives-macos</artifactId>
+            <version>${imgui.java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.spair</groupId>
+            <artifactId>imgui-java-natives-windows</artifactId>
+            <version>${imgui.java.version}</version>
+        </dependency>
+    </dependencies>
+</project>

@@ -11,6 +11,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>azalea-core</module>
+        <module>azalea-imgui</module>
     </modules>
 
     <properties>
