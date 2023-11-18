@@ -27,7 +27,7 @@ public final class ColorRGBA extends Vector4f {
      * @param b blue value from 0 to 255
      * @return color
      */
-    public static ColorRGBA rgba(int r, int g, int b) {
+    public static ColorRGBA rgb(int r, int g, int b) {
         return rgba(r, g, b, 255);
     }
 
