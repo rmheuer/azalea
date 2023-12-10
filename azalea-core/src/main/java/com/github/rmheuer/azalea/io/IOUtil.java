@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public final class IOUtil {
     public static void copyStreams(InputStream in, OutputStream out) throws IOException {
@@ -35,6 +37,14 @@ public final class IOUtil {
 
     public static String readToString(InputStream in) throws IOException {
         return new String(readToByteArray(in), StandardCharsets.UTF_8);
+    }
+
+    public static byte[] readToByteArray(Path path) throws IOException {
+        return Files.readAllBytes(path);
+    }
+
+    public static String readToString(Path path) throws IOException {
+        return new String(readToByteArray(path), StandardCharsets.UTF_8);
     }
 
     private IOUtil() {
