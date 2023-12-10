@@ -15,6 +15,10 @@ public final class MathUtil {
         return lerp(newMin, newMax, (val - min) / (max - min));
     }
 
+    public static int nextPowerOf2(int i) {
+        return i == 1 ? 1 : Integer.highestOneBit(i - 1) * 2;
+    }
+
     private MathUtil() {
         throw new AssertionError();
     }
