@@ -14,6 +14,7 @@ import java.io.InputStream;
 
 /**
  * Represents a renderer used to render into a window.
+ * The renderer is currently not thread-safe, but will be in the future.
  */
 public interface Renderer {
     /**

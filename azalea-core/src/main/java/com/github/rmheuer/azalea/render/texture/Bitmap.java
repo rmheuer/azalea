@@ -16,7 +16,7 @@ import java.util.Arrays;
 import static org.lwjgl.stb.STBImage.stbi_image_free;
 import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 
-public final class Bitmap {
+public final class Bitmap implements BitmapRegion {
     public static final int RED_SHIFT   = 0;
     public static final int GREEN_SHIFT = 8;
     public static final int BLUE_SHIFT  = 16;
@@ -102,31 +102,40 @@ public final class Bitmap {
         this.rgbaData = rgbaData;
     }
 
-    public ColorRGBA getPixel(Vector2i pos) {
-        return getPixel(pos.x, pos.y);
+    private int pixelIdx(int x, int y) {
+        return x + y * width;
     }
 
+    @Override
     public ColorRGBA getPixel(int x, int y) {
         checkBounds(x, y);
-        return decodeColor(rgbaData[x + y * width]);
+        return decodeColor(rgbaData[pixelIdx(x, y)]);
     }
 
-    public void setPixel(Vector2i pos, ColorRGBA color) {
-        setPixel(pos.x, pos.y, color);
-    }
-
+    @Override
     public void setPixel(int x, int y, ColorRGBA color) {
         checkBounds(x, y);
-        rgbaData[x + y * width] = encodeColor(color);
+        rgbaData[pixelIdx(x, y)] = encodeColor(color);
     }
 
-    public void blit(Bitmap img, int x, int y) {
+    @Override
+    public void blit(BitmapRegion img, int x, int y) {
         checkBounds(x, y);
-        if (x + img.width > width || y + img.height > height)
+
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (x + imgW > width || y + imgH > height)
             throw new IndexOutOfBoundsException("Image extends out of bounds");
 
-        for (int row = 0; row < img.height; row++) {
-            System.arraycopy(img.rgbaData, row * img.width, rgbaData, x + (y + row) * width, img.width);
+        Bitmap src = img.getSourceBitmap();
+        int imgXInSrc = img.getSourceOffsetX();
+        int imgYInSrc = img.getSourceOffsetY();
+
+        for (int row = 0; row < imgH; row++) {
+            int srcY = row + imgYInSrc;
+            int dstY = y + row;
+
+            System.arraycopy(src.rgbaData, src.pixelIdx(imgXInSrc, srcY), rgbaData, pixelIdx(x, dstY), imgW);
         }
     }
 
@@ -136,15 +145,33 @@ public final class Bitmap {
         }
     }
 
+    @Override
     public int getWidth() {
         return width;
     }
 
+    @Override
     public int getHeight() {
         return height;
     }
 
+    @Override
     public int[] getRgbaData() {
         return rgbaData;
+    }
+
+    @Override
+    public Bitmap getSourceBitmap() {
+        return this;
+    }
+
+    @Override
+    public int getSourceOffsetX() {
+        return 0;
+    }
+
+    @Override
+    public int getSourceOffsetY() {
+        return 0;
     }
 }
