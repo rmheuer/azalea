@@ -1,11 +1,9 @@
 package com.github.rmheuer.azalea.render.opengl;
 
-import com.github.rmheuer.azalea.render.texture.Bitmap;
+import com.github.rmheuer.azalea.render.texture.BitmapRegion;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
 
-import static org.lwjgl.opengl.GL11C.*;
-import static org.lwjgl.opengl.GL13C.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13C.glActiveTexture;
+import static org.lwjgl.opengl.GL33C.*;
 
 public final class OpenGLTexture2D implements Texture2D, OpenGLTexture {
     private final int id;
@@ -16,9 +14,15 @@ public final class OpenGLTexture2D implements Texture2D, OpenGLTexture {
     }
 
     @Override
-    public void setData(Bitmap data) {
+    public void setData(BitmapRegion data) {
         glBindTexture(GL_TEXTURE_2D, id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, data.getWidth(), data.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data.getRgbaData());
+    }
+
+    @Override
+    public void setSubData(BitmapRegion data, int x, int y) {
+        glBindTexture(GL_TEXTURE_2D, id);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, data.getWidth(), data.getHeight(), GL_RGBA, GL_UNSIGNED_BYTE, data.getRgbaData());
     }
 
     private int glFilter(Filter filter) {
@@ -51,5 +55,9 @@ public final class OpenGLTexture2D implements Texture2D, OpenGLTexture {
     @Override
     public void close() {
         glDeleteTextures(id);
+    }
+
+    public int getId() {
+        return id;
     }
 }
