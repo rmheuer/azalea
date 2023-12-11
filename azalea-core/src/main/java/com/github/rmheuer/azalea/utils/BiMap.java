@@ -32,4 +32,9 @@ public final class BiMap<A, B> {
     public B getBOrDefault(A a, B def) {
         return aToB.getOrDefault(a, def);
     }
+
+    public void clear() {
+        aToB.clear();
+        bToA.clear();
+    }
 }
