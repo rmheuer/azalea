@@ -5,6 +5,8 @@ import com.github.rmheuer.azalea.render.ColorRGBA;
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.mesh.Mesh;
 import com.github.rmheuer.azalea.render.pipeline.ActivePipeline;
+import com.github.rmheuer.azalea.render.pipeline.CullMode;
+import com.github.rmheuer.azalea.render.pipeline.FaceWinding;
 import com.github.rmheuer.azalea.render.pipeline.PipelineInfo;
 import com.github.rmheuer.azalea.render.shader.ShaderProgram;
 import com.github.rmheuer.azalea.render.shader.ShaderStage;
@@ -63,6 +65,15 @@ public final class OpenGLRenderer implements Renderer {
         setEnabled(GL_BLEND, pipeline.isBlend());
         if (pipeline.isBlend())
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        setEnabled(GL_DEPTH_TEST, pipeline.isDepthTest());
+
+        if (pipeline.getCullMode() == CullMode.OFF) {
+            glDisable(GL_CULL_FACE);
+        } else {
+            glEnable(GL_CULL_FACE);
+            glCullFace(pipeline.getCullMode() == CullMode.FRONT ? GL_FRONT : GL_BACK);
+            glFrontFace(pipeline.getWinding() == FaceWinding.CW_FRONT ? GL_CW : GL_CCW);
+        }
 
         return new ActivePipelineImpl(shader);
     }
