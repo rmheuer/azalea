@@ -22,6 +22,10 @@ public final class MeshData implements SafeCloseable {
     private int mark;
     private boolean finished;
     private int finalVertexCount;
+    
+    public MeshData(PrimitiveType primType, AttribType... layout) {
+        this(primType, new VertexLayout(layout));
+    }
 
     public MeshData(PrimitiveType primType, VertexLayout layout) {
         this.primType = primType;

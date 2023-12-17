@@ -33,6 +33,10 @@ public final class BiMap<A, B> {
         return aToB.getOrDefault(a, def);
     }
 
+    public int size() {
+        return aToB.size();
+    }
+
     public void clear() {
         aToB.clear();
         bToA.clear();

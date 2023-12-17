@@ -19,6 +19,13 @@ public final class MathUtil {
         return i == 1 ? 1 : Integer.highestOneBit(i - 1) * 2;
     }
 
+    public static int ceilLog2(int i) {
+        if (i == 0)
+            return 0;
+
+        return 32 - Integer.numberOfLeadingZeros(i - 1);
+    }
+
     private MathUtil() {
         throw new AssertionError();
     }
