@@ -1,6 +1,7 @@
 package com.github.rmheuer.azalea.serialization;
 
 import com.github.rmheuer.azalea.serialization.graph.*;
+import com.github.rmheuer.azalea.serialization.json.JsonDeserializer;
 import com.github.rmheuer.azalea.serialization.json.JsonSerializer;
 import com.github.rmheuer.azalea.serialization.json.PrettyTokenOutput;
 
@@ -27,5 +28,8 @@ public class Test {
         serializer.serialize(obj);
 
         System.out.println(out);
+
+        DataNode deserialized = new JsonDeserializer(out.toString()).deserializeNode();
+        System.out.println(deserialized);
     }
 }
