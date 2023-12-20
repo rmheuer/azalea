@@ -1,12 +1,22 @@
 package com.github.rmheuer.azalea.runtime;
 
+import java.util.function.Supplier;
+
 public abstract class Game {
     private boolean running = false;
 
     protected abstract void update(float dt);
     protected abstract void close();
 
-    public final void run() {
+    public static void launch(String[] args, Supplier<Game> gameConstructor) {
+        if (EngineRuntime.restartForMacOS(args))
+            return;
+
+        Game game = gameConstructor.get();
+        game.run();
+    }
+
+    private void run() {
         running = true;
         long prevTime = System.nanoTime();
         while (running) {
