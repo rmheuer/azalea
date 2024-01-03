@@ -51,11 +51,11 @@ public class DrawList2D {
         return vertices.isEmpty() && indices.isEmpty();
     }
 
-    public List<DrawVertex> getVertices() {
+    List<DrawVertex> getVertices() {
         return vertices;
     }
 
-    public List<Integer> getIndices() {
+    List<Integer> getIndices() {
         return indices;
     }
 
@@ -98,8 +98,8 @@ public class DrawList2D {
         pos = poseStack.getMatrix().transformPosition(pos);
 
         if (tex != null) {
-            Vector2f uvMin = tex.getRegionMinUV();
-            Vector2f uvMax = tex.getRegionMaxUV();
+            Vector2f uvMin = tex.getRegionTopLeftUV();
+            Vector2f uvMax = tex.getRegionBottomRightUV();
 
             u = MathUtil.lerp(uvMin.x, uvMax.x, u);
             v = MathUtil.lerp(uvMin.y, uvMax.y, v);

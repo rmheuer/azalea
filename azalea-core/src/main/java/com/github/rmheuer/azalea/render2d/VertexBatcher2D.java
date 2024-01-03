@@ -5,7 +5,15 @@ import com.github.rmheuer.azalea.render.texture.Texture2D;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class VertexBatcher2D {
+final class VertexBatcher2D {
+    /**
+     * Assembles draw vertices into batches.
+     *
+     * @param vertices vertices to assemble
+     * @param indices indices into the vertices
+     * @param defaultTexture texture to use if none is specified
+     * @return batched vertices
+     */
     public static List<VertexBatch> batch(List<DrawVertex> vertices, List<Integer> indices, Texture2D defaultTexture) {
         // Here we assume that a polygon is grouped with sequential vertices
         // and indices, and that the texture is constant throughout the polygon.

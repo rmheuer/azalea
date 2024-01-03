@@ -2,6 +2,9 @@ package com.github.rmheuer.azalea.audio.play;
 
 import org.lwjgl.openal.AL10;
 
+/**
+ * Represents a playing {@link com.github.rmheuer.azalea.audio.data.AudioSample}.
+ */
 public final class PlayingSample extends PlayingSound {
     public PlayingSample(int source) {
         super(source);

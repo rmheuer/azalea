@@ -4,10 +4,11 @@ import com.github.rmheuer.azalea.render.texture.Texture2DRegion;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-// Note: Not an actual vertex type!
-//       This is the intermediate representation of the vertices
-//       before being batched.
-public final class DrawVertex {
+/**
+ * The intermediate representation of vertices in a {@link DrawList2D} before
+ * being batched for rendering.
+ */
+final class DrawVertex {
     private final Vector3f pos;
     private final float u, v;
     private final Vector4f color;

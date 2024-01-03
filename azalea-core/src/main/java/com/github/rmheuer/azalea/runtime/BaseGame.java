@@ -5,6 +5,9 @@ import com.github.rmheuer.azalea.event.EventBus;
 import com.github.rmheuer.azalea.render.*;
 import org.joml.Vector2i;
 
+/**
+ * Base game implementation that handles things most games use.
+ */
 public abstract class BaseGame extends Game {
     private final EventBus eventBus;
     private final Window window;
@@ -14,6 +17,11 @@ public abstract class BaseGame extends Game {
 
     private ColorRGBA backgroundColor;
 
+    /**
+     * Initializes the engine systems.
+     *
+     * @param settings settings to create the game window
+     */
     public BaseGame(WindowSettings settings) {
         eventBus = new EventBus();
         window = Window.create(settings);
@@ -25,13 +33,27 @@ public abstract class BaseGame extends Game {
         backgroundColor = new ColorRGBA(0.2f, 0.2f, 0.2f);
     }
 
+    /**
+     * Steps the game state.
+     *
+     * @param dt time since the last tick
+     */
     protected abstract void tick(float dt);
+
+    /**
+     * Draws the game to the window.
+     *
+     * @param renderer renderer to render with
+     */
     protected abstract void render(Renderer renderer);
 
+    /**
+     * Cleans up any resources the game is using. Called when the game ends.
+     */
     protected abstract void cleanUp();
 
     @Override
-    protected final void update(float dt) {
+    protected void update(float dt) {
         fpsCounter.beginFrame();
 
         tick(dt);
@@ -58,30 +80,65 @@ public abstract class BaseGame extends Game {
         audioSystem.close();
     }
 
+    /**
+     * Gets the event bus used for event dispatch.
+     *
+     * @return event bus
+     */
     public EventBus getEventBus() {
         return eventBus;
     }
 
+    /**
+     * Gets the window the game is rendered into.
+     *
+     * @return window
+     */
     public Window getWindow() {
         return window;
     }
 
+    /**
+     * Gets the window renderer.
+     *
+     * @return renderer
+     */
     public Renderer getRenderer() {
         return renderer;
     }
 
+    /**
+     * Gets the frame rate counter.
+     *
+     * @return fps counter
+     */
     public FPSCounter getFpsCounter() {
         return fpsCounter;
     }
 
+    /**
+     * Gets the audio system.
+     *
+     * @return audio system
+     */
     public AudioSystem getAudioSystem() {
         return audioSystem;
     }
 
+    /**
+     * Gets the current background color.
+     *
+     * @return background color
+     */
     public ColorRGBA getBackgroundColor() {
         return backgroundColor;
     }
 
+    /**
+     * Sets the background color.
+     *
+     * @param backgroundColor new background color
+     */
     public void setBackgroundColor(ColorRGBA backgroundColor) {
         this.backgroundColor = backgroundColor;
     }

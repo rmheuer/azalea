@@ -5,6 +5,9 @@ import org.joml.Vector2f;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Utility to clip a polygon within another.
+ */
 public final class PolygonClipper {
     private static boolean isInside(Vector2f p1, Vector2f p2, Vector2f q) {
         float r = (p2.x - p1.x) * (q.y - p1.y) - (p2.y - p1.y) * (q.x - p1.x);
@@ -63,6 +66,13 @@ public final class PolygonClipper {
         }
     }
 
+    /**
+     * Clips a polygon within another polygon.
+     * 
+     * @param targetPolygon the polygon to clip
+     * @param clippingPolygon the polygon to clip inside
+     * @return clipped vertices of {@code targetPolygon}
+     */
     public static List<Vector2f> clip(List<Vector2f> targetPolygon, List<Vector2f> clippingPolygon) {
         List<Vector2f> clipped = new ArrayList<>(targetPolygon);
         for (int i = 0; i < clippingPolygon.size(); i++) {
@@ -78,6 +88,13 @@ public final class PolygonClipper {
         return clipped;
     }
 
+    /**
+     * Clips a polygon within a rectangle.
+     * 
+     * @param targetPolygon the polygon to clip
+     * @param rect the rectangle to clip inside
+     * @return clipped vertices of {@code targetPolygon}
+     */
     public static List<Vector2f> clip(List<Vector2f> targetPolygon, Rectangle rect) {
         List<Vector2f> clip = new ArrayList<>();
         clip.add(rect.getMin());

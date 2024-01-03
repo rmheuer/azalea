@@ -3,8 +3,11 @@ package com.github.rmheuer.azalea.event;
 import java.lang.reflect.Method;
 import java.util.*;
 
+/**
+ * The system to dispatch events to listeners.
+ */
 public final class EventBus {
-    private static final class HandlerFn<E extends Event> implements Comparable<HandlerFn<?>> {
+    private static final class HandlerFn implements Comparable<HandlerFn> {
         private final Listener listener;
         private final Method method;
         private final EventPriority priority;
@@ -25,7 +28,7 @@ public final class EventBus {
         }
 
         @Override
-        public int compareTo(HandlerFn<?> o) {
+        public int compareTo(HandlerFn o) {
             // Comparison intentionally backwards, this makes higher priority
             // handlers happen earlier
             return Integer.compare(o.priority.getLevel(), this.priority.getLevel());
@@ -37,42 +40,34 @@ public final class EventBus {
         }
     }
 
-    private static final class HandlerSet<E extends Event> {
-        private final List<HandlerFn<E>> handlers;
+    private static final class HandlerSet {
+        private final List<HandlerFn> handlers;
 
         public HandlerSet() {
             handlers = new ArrayList<>();
         }
 
-        public void add(HandlerFn<E> handler) {
+        public void add(HandlerFn handler) {
             handlers.add(handler);
         }
 
-        public List<HandlerFn<E>> getHandlers() {
+        public List<HandlerFn> getHandlers() {
             return handlers;
         }
     }
 
-    private final Map<Class<? extends Event>, HandlerSet<? extends Event>> handlerSets;
+    private final Map<Class<? extends Event>, HandlerSet> handlerSets;
 
     public EventBus() {
         handlerSets = new HashMap<>();
     }
 
-    /**
-     * Call handlers for event type and event's superclasses.
-     * Superclasses are called first, then handlers are called going down the
-     * type hierarchy.
-     *
-     * @param type type of handler to dispatch
-     * @param event event to dispatch. Must be an instance of type
-     */
     private void dispatch(Class<?> type, Event event) {
         // Collect handlers for event and all supertypes of event
-        List<HandlerFn<?>> handlers = new ArrayList<>();
+        List<HandlerFn> handlers = new ArrayList<>();
         while (Event.class.isAssignableFrom(type)) {
             // Put them at the beginning so superclasses get called first
-            HandlerSet<?> set = handlerSets.get(type);
+            HandlerSet set = handlerSets.get(type);
             if (set != null)
                 handlers.addAll(0, set.getHandlers());
 
@@ -83,17 +78,29 @@ public final class EventBus {
         handlers.sort(Comparator.naturalOrder());
 
         // Call them
-        for (HandlerFn<?> fn : handlers) {
+        for (HandlerFn fn : handlers) {
             if (event.isCancelled())
                 break;
             fn.invoke(event);
         }
     }
 
+    /**
+     * Call handlers for an event and its superclasses. Superclasses are called
+     * first, then handlers are called going down the type hierarchy.
+     *
+     * @param event event to dispatch
+     */
     public void dispatchEvent(Event event) {
         dispatch(event.getClass(), event);
     }
 
+    /**
+     * Registers a listener to receive events. All methods in the listener
+     * annotated with {@link EventHandler} are registered to handle events.
+     *
+     * @param listener listener to register
+     */
     public void registerListener(Listener listener) {
         for (Method method : listener.getClass().getMethods()) {
             EventHandler annotation = method.getAnnotation(EventHandler.class);
@@ -106,11 +113,17 @@ public final class EventBus {
                 continue;
             }
 
-            handlerSets.computeIfAbsent(params[0].asSubclass(Event.class), (t) -> new HandlerSet<>())
-                    .add(new HandlerFn<>(listener, method, annotation.priority()));
+            handlerSets.computeIfAbsent(params[0].asSubclass(Event.class), (t) -> new HandlerSet())
+                    .add(new HandlerFn(listener, method, annotation.priority()));
         }
     }
 
+    /**
+     * Unregisters a listener from receiving events. After unregistering, it
+     * will no longer receive events.
+     *
+     * @param listener listener to unregister
+     */
     public void unregisterListener(Listener listener) {
         // TODO
     }

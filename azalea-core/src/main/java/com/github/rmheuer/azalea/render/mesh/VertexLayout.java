@@ -3,10 +3,18 @@ package com.github.rmheuer.azalea.render.mesh;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * The layout in memory of a vertex.
+ */
 public final class VertexLayout {
     private final AttribType[] types;
     private final int sizeOf;
 
+    /**
+     * Creates a new layout of the specified attribute types.
+     *
+     * @param types vertex attribute types
+     */
     public VertexLayout(AttribType... types) {
         this.types = types;
 
@@ -16,10 +24,20 @@ public final class VertexLayout {
         sizeOf = sz;
     }
 
+    /**
+     * Gets the attribute types in this layout.
+     *
+     * @return types
+     */
     public AttribType[] getTypes() {
         return types;
     }
 
+    /**
+     * Gets the total size of one vertex in bytes.
+     *
+     * @return size of vertex in bytes
+     */
     public int sizeOf() {
         return sizeOf;
     }

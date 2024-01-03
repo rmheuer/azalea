@@ -9,7 +9,13 @@ import com.github.rmheuer.azalea.render.texture.Texture2DRegion;
 
 import java.util.List;
 
-public final class VertexBatch {
+/**
+ * A batch of vertices to draw.
+ */
+final class VertexBatch {
+    /**
+     * The layout of the generated vertex data.
+     */
     public static final VertexLayout LAYOUT = new VertexLayout(
             AttribType.VEC3, // Position
             AttribType.VEC2, // Texture coord
@@ -20,11 +26,22 @@ public final class VertexBatch {
     private final Texture2D[] textures;
     private final MeshData data;
 
+    /**
+     * Creates a new empty batch.
+     */
     public VertexBatch() {
         textures = new Texture2D[Renderer2D.MAX_TEXTURE_SLOTS];
         data = new MeshData(PrimitiveType.TRIANGLES, LAYOUT);
     }
 
+    /**
+     * Tries to add another vertex to the batch. This will fail if the batch is
+     * out of texture slots.
+     *
+     * @param v vertex to add
+     * @param defaultTexture texture to use if none is specified
+     * @return whether the vertex was able to be added
+     */
     public boolean addVertex(DrawVertex v, Texture2D defaultTexture) {
         Texture2DRegion texSub = v.getTex();
         Texture2D tex;
@@ -57,21 +74,41 @@ public final class VertexBatch {
         return true;
     }
 
+    /**
+     * Adds an index to the indices array.
+     *
+     * @param index index to add
+     */
     public void addIndex(int index) {
         data.index(index);
     }
 
+    /**
+     * Adds multiple indices at once to the indices array.
+     *
+     * @param indices indices to add
+     */
     public void addIndices(List<Integer> indices) {
         for (int i : indices) {
             data.index(i);
         }
     }
 
+    /**
+     * Gets the textures this batch uses.
+     *
+     * @return textures
+     */
     public Texture2D[] getTextures() {
         return textures;
     }
 
-    // Transfers ownership of the data to the caller
+    /**
+     * Gets the mesh data that was generated. This transfers ownership of the
+     * data to the caller.
+     *
+     * @return generated data
+     */
     public MeshData getData() {
         return data;
     }

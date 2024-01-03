@@ -20,6 +20,10 @@ import java.nio.IntBuffer;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
+/**
+ * Handles window creation and input handling using
+ * <a href="https://www.glfw.org/">GLFW</a>.
+ */
 public abstract class GlfwWindow implements Window, Keyboard, Mouse {
     private static final BiMap<MouseButton, Integer> MOUSE_BUTTONS = new BiMap<>();
     private static final BiMap<Integer, Key> KEYS = new BiMap<>();
@@ -27,6 +31,11 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
     private final long handle;
     private Vector2d cursorPos;
 
+    /**
+     * Creates a new GLFW window with the specified settings.
+     *
+     * @param settings settings for the window to create
+     */
     public GlfwWindow(WindowSettings settings) {
         if (!glfwInit())
             throw new RuntimeException("Failed to init GLFW!");
@@ -37,6 +46,7 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
         if (settings.isFullScreen()) {
+            // FIXME: both glfwGetPrimaryMonitor() and glfwGetVideoMode() could fail
             long monitor = glfwGetPrimaryMonitor();
             GLFWVidMode vidMode = glfwGetVideoMode(monitor);
             handle = glfwCreateWindow(vidMode.width(), vidMode.height(), settings.getTitle(), monitor, NULL);
@@ -53,12 +63,16 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
 
         glfwShowWindow(handle);
         glfwFocusWindow(handle);
-
-//        if (settings.isFullScreen())
-//            glfwMaximizeWindow(handle);
     }
 
+    /**
+     * Sets the window hints for the graphics context.
+     */
     protected abstract void setContextWindowHints();
+
+    /**
+     * Initializes the graphics context in the newly created window.
+     */
     protected abstract void initContext();
 
     @Override
@@ -171,6 +185,11 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
         return glfwGetMouseButton(handle, getGlfwId(button)) == GLFW_PRESS;
     }
 
+    /**
+     * Gets the GLFW window handle.
+     *
+     * @return GLFW native window handle
+     */
     public long getHandle() {
         return handle;
     }

@@ -7,6 +7,7 @@ import com.github.rmheuer.azalea.render.mesh.Mesh;
 import com.github.rmheuer.azalea.render.pipeline.ActivePipeline;
 import com.github.rmheuer.azalea.render.pipeline.CullMode;
 import com.github.rmheuer.azalea.render.pipeline.FaceWinding;
+import com.github.rmheuer.azalea.render.pipeline.FillMode;
 import com.github.rmheuer.azalea.render.pipeline.PipelineInfo;
 import com.github.rmheuer.azalea.render.shader.ShaderProgram;
 import com.github.rmheuer.azalea.render.shader.ShaderStage;
@@ -74,6 +75,8 @@ public final class OpenGLRenderer implements Renderer {
             glCullFace(pipeline.getCullMode() == CullMode.FRONT ? GL_FRONT : GL_BACK);
             glFrontFace(pipeline.getWinding() == FaceWinding.CW_FRONT ? GL_CW : GL_CCW);
         }
+
+        glPolygonMode(GL_FRONT_AND_BACK, pipeline.getFillMode() == FillMode.FILLED ? GL_FILL : GL_LINE);
 
         return new ActivePipelineImpl(shader);
     }

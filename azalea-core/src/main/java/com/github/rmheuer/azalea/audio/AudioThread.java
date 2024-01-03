@@ -5,7 +5,7 @@ import com.github.rmheuer.azalea.audio.play.PlayingStream;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public final class AudioThread extends Thread {
+final class AudioThread extends Thread {
     private volatile boolean running = false;
     private final AudioSystem system;
     private final CopyOnWriteArrayList<PlayingSound> sounds;

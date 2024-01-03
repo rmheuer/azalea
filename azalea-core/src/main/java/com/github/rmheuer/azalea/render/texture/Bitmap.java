@@ -16,17 +16,32 @@ import java.util.Arrays;
 import static org.lwjgl.stb.STBImage.stbi_image_free;
 import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 
+/** A 2D RGBA texture stored with CPU access. */
 public final class Bitmap implements BitmapRegion {
+    /** The number of bits the red component is shifted left. */
     public static final int RED_SHIFT   = 0;
+    /** The number of bits the green component is shifted left. */
     public static final int GREEN_SHIFT = 8;
+    /** The number of bits the blue component is shifted left. */
     public static final int BLUE_SHIFT  = 16;
+    /** The number of bits the alpha component is shifted left. */
     public static final int ALPHA_SHIFT = 24;
 
+    /** Bitmask for the red component. */
     public static final int RED_MASK   = 0xFF << RED_SHIFT;
+    /** Bitmask for the green component. */
     public static final int GREEN_MASK = 0xFF << GREEN_SHIFT;
+    /** Bitmask for the blue component. */
     public static final int BLUE_MASK  = 0xFF << BLUE_SHIFT;
+    /** Bitmask for the alpha component. */
     public static final int ALPHA_MASK = 0xFF << ALPHA_SHIFT;
 
+    /**
+     * Encodes a color into packed RGBA.
+     *
+     * @param color color to encode
+     * @return packed RGBA color
+     */
     public static int encodeColor(ColorRGBA color) {
         int r = (int) (color.getRed() * 255);
         int g = (int) (color.getGreen() * 255);
@@ -36,6 +51,12 @@ public final class Bitmap implements BitmapRegion {
         return r << RED_SHIFT | g << GREEN_SHIFT | b << BLUE_SHIFT | a << ALPHA_SHIFT;
     }
 
+    /**
+     * Decodes a color from packed RGBA.
+     *
+     * @param color packed RGBA color to decode
+     * @return decoded color
+     */
     public static ColorRGBA decodeColor(int color) {
         int r = (color & RED_MASK)   >>> RED_SHIFT;
         int g = (color & GREEN_MASK) >>> GREEN_SHIFT;
@@ -45,6 +66,14 @@ public final class Bitmap implements BitmapRegion {
         return ColorRGBA.rgba(r, g, b, a);
     }
 
+    /**
+     * Reads and decodes a bitmap from an {@code InputStream}. This will take
+     * ownership of the stream.
+     *
+     * @param in input stream to read from
+     * @return decoded bitmap
+     * @throws IOException if an IO error occurs
+     */
     public static Bitmap decode(InputStream in) throws IOException {
         ByteBuffer data = IOUtil.readToByteBuffer(in);
 
@@ -82,10 +111,24 @@ public final class Bitmap implements BitmapRegion {
     private final int height;
     private final int[] rgbaData;
 
+    /**
+     * Creates a new empty bitmap with the specified size, filled with white.
+     *
+     * @param width width to create in pixels
+     * @param height height to create in pixels
+     */
     public Bitmap(int width, int height) {
         this(width, height, ColorRGBA.white());
     }
 
+    /**
+     * Creates a new bitmap with the specified size, filled with the specified
+     * color.
+     *
+     * @param width width to create in pixels
+     * @param height height to create in pixels
+     * @param fillColor color to fill with
+     */
     public Bitmap(int width, int height, ColorRGBA fillColor) {
         this(width, height, new int[width * height]);
 
@@ -93,6 +136,13 @@ public final class Bitmap implements BitmapRegion {
         Arrays.fill(rgbaData, fill);
     }
 
+    /**
+     * Creates a new bitmap with provided RGBA data.
+     *
+     * @param width width in pixels
+     * @param height height in pixels
+     * @param rgbaData packed RGBA data, should have length {@code width*height}.
+     */
     public Bitmap(int width, int height, int[] rgbaData) {
         if (rgbaData.length != width * height)
             throw new IllegalArgumentException("RGBA data is wrong size");

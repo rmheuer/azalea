@@ -8,14 +8,31 @@ import org.joml.Vector4fc;
  * Represents an RGBA color with {@code float} components.
  */
 public final class ColorRGBA extends Vector4f {
+    /** @return the color {@code (0, 0, 0, 0)} */
     public static ColorRGBA transparent() { return new ColorRGBA(0, 0, 0, 0); }
+
+    /** @return the color {@code (0, 0, 0)} */
     public static ColorRGBA black() { return new ColorRGBA(0, 0, 0); }
+
+    /** @return the color {@code (1, 0, 0)} */
     public static ColorRGBA red() { return new ColorRGBA(1, 0, 0); }
+
+    /** @return the color {@code (0, 1, 0)} */
     public static ColorRGBA green() { return new ColorRGBA(0, 1, 0); }
+
+    /** @return the color {@code (1, 1, 0)} */
     public static ColorRGBA yellow() { return new ColorRGBA(1, 1, 0); }
+
+    /** @return the color {@code (0, 0, 1)} */
     public static ColorRGBA blue() { return new ColorRGBA(0, 0, 1); }
+
+    /** @return the color {@code (1, 0, 1)} */
     public static ColorRGBA magenta() { return new ColorRGBA(1, 0, 1); }
+
+    /** @return the color {@code (0, 1, 1)} */
     public static ColorRGBA cyan() { return new ColorRGBA(0, 1, 1); }
+
+    /** @return the color {@code (1, 1, 1)} */
     public static ColorRGBA white() { return new ColorRGBA(1, 1, 1); }
 
     /**

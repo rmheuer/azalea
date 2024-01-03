@@ -2,7 +2,7 @@ package com.github.rmheuer.azalea.render.texture;
 
 import com.github.rmheuer.azalea.render.ColorRGBA;
 
-public final class SubBitmap implements BitmapRegion {
+final class SubBitmap implements BitmapRegion {
     private final Bitmap srcBitmap;
     private final int x, y, width, height;
 

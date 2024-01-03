@@ -18,7 +18,11 @@ import java.util.Queue;
 import static org.lwjgl.stb.STBVorbis.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-// An audio stream, decoding from an OGG file as it plays
+/**
+ * An audio stream, decoding from an OGG file as it plays. This should be used
+ * for longer audio files, such as music tracks, that you would not want fully
+ * loaded into memory.
+ */
 public final class AudioStream implements AudioData {
     private static final int BUFFER_SIZE_INCREMENT = 1024;
 
@@ -84,10 +88,21 @@ public final class AudioStream implements AudioData {
         hitEOF = false;
     }
 
+    /**
+     * Gets the number of audio channels within the stream. This will typically
+     * be 1 for mono and 2 for stereo.
+     *
+     * @return number of channels
+     */
     public int getChannels() {
         return channels;
     }
 
+    /**
+     * Gets the sample rate the audio data should be played at.
+     *
+     * @return sample rate in hz
+     */
     public int getSampleRate() {
         return sampleRate;
     }
@@ -131,6 +146,15 @@ public final class AudioStream implements AudioData {
         return (short) MathUtil.clamp((int) (sample * 32767.5f - 0.5f), -32768, 32767);
     }
 
+    /**
+     * Gets the next block of samples in the stream. The buffer will contain
+     * one second of audio data, unless the end is reached and less than a
+     * second remains in the stream. The sample data from each channel is
+     * interleaved per sample.
+     *
+     * @return next block of samples if available, otherwise null if the end is
+     *         reached or an IO error occurs
+     */
     public ShortBuffer readSamples() {
         if (hitEOF && chunkQueue.isEmpty() && currentFillingBuffer == null)
             return null;
@@ -213,6 +237,12 @@ public final class AudioStream implements AudioData {
             MemoryUtil.memFree(buf);
     }
 
+    /**
+     * Gets the string representation of an STB Vorbis error code.
+     *
+     * @param err STB Vorbis error code
+     * @return error code name
+     */
     public static String vorbisErrToString(int err) {
         switch (err) {
             case VORBIS__no_error:

@@ -16,6 +16,9 @@ import org.joml.Matrix4f;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Renderer to render {@code DrawList2D}s.
+ */
 public final class Renderer2D implements SafeCloseable {
     public static final int MAX_TEXTURE_SLOTS = 16;
 
@@ -27,6 +30,9 @@ public final class Renderer2D implements SafeCloseable {
     private final ShaderProgram shader;
     private final Texture2D whiteTex;
 
+    /**
+     * @param renderer renderer to use for rendering
+     */
     public Renderer2D(Renderer renderer) {
         this.renderer = renderer;
         mesh = renderer.createMesh();
@@ -65,6 +71,14 @@ public final class Renderer2D implements SafeCloseable {
         pipeline.draw(mesh);
     }
 
+    /**
+     * Renders a {@code DrawList2D}.
+     *
+     * @param list
+     * @param transform
+     * @param projection
+     * @param view
+     */
     public void draw(DrawList2D list, Matrix4f transform, Matrix4f projection, Matrix4f view) {
         try (ActivePipeline pipe = renderer.bindPipeline(new PipelineInfo(shader))) {
             pipe.getUniform("u_Transform").setMat4(transform);
