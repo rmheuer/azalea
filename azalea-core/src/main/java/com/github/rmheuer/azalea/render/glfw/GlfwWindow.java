@@ -31,6 +31,7 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
 
     private final long handle;
     private Vector2d cursorPos;
+    private boolean cursorCaptured;
 
     /**
      * Creates a new GLFW window with the specified settings.
@@ -65,14 +66,8 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
         glfwShowWindow(handle);
         glfwFocusWindow(handle);
 
-	// Get initial cursor position
-	try (MemoryStack stack = MemoryStack.stackPush()) {
-	    DoubleBuffer x = stack.mallocDouble(1);
-	    DoubleBuffer y = stack.mallocDouble(1);
-	    glfwGetCursorPos(handle, x, y);
-
-	    cursorPos = new Vector2d(x.get(0), y.get(0));
-	}
+	cursorPos = getCurrentCursorPos();
+	cursorCaptured = false;
     }
 
     /**
@@ -143,9 +138,13 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
             bus.dispatchEvent(new WindowFramebufferSizeEvent(this, new Vector2i(width, height)));
         });
         glfwSetCursorPosCallback(handle, (window, x, y) -> {
-	    Vector2d prevCursorPos = cursorPos;
-            cursorPos = new Vector2d(x, y);
-            bus.dispatchEvent(new MouseMoveEvent(this, cursorPos, prevCursorPos));
+            Vector2d newCursorPos = new Vector2d(x, y);
+            bus.dispatchEvent(new MouseMoveEvent(this, newCursorPos, cursorPos));
+	    if (cursorCaptured) {
+		glfwSetCursorPos(handle, 0, 0);
+	    } else {
+		cursorPos = newCursorPos;
+	    }
         });
         glfwSetMouseButtonCallback(handle, (window, button, action, mods) -> {
             MouseButton mouseButton = getMouseButton(button);
@@ -194,6 +193,30 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
     @Override
     public boolean isButtonPressed(MouseButton button) {
         return glfwGetMouseButton(handle, getGlfwId(button)) == GLFW_PRESS;
+    }
+
+    private Vector2d getCurrentCursorPos() {
+	try (MemoryStack stack = MemoryStack.stackPush()) {
+	    DoubleBuffer x = stack.mallocDouble(1);
+	    DoubleBuffer y = stack.mallocDouble(1);
+	    glfwGetCursorPos(handle, x, y);
+
+	    return new Vector2d(x.get(0), y.get(0));
+	}	
+    }
+
+    @Override
+    public void setCursorCaptured(boolean captured) {
+	this.cursorCaptured = captured;
+
+	glfwSetInputMode(handle, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+	
+	if (captured) {
+	    glfwSetCursorPos(handle, 0, 0);
+	    cursorPos = new Vector2d(0, 0);
+	} else {
+	    cursorPos = getCurrentCursorPos();
+	}
     }
 
     /**

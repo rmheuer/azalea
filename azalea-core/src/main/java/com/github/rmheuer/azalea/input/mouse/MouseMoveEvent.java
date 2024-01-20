@@ -15,7 +15,8 @@ public final class MouseMoveEvent extends MouseEvent {
 
     /**
      * Gets the previous position of the mouse cursor within the window. This
-     * is the position the cursor was in before the movement occured.
+     * is the position the cursor was in before the movement occured. If the
+     * cursor is captured, this will always be (0, 0).
      *
      * @return previous cursor position in pixel coordinates
      */
