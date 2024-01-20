@@ -15,6 +15,7 @@ import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.system.MemoryStack;
 
+import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -63,6 +64,15 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
 
         glfwShowWindow(handle);
         glfwFocusWindow(handle);
+
+	// Get initial cursor position
+	try (MemoryStack stack = MemoryStack.stackPush()) {
+	    DoubleBuffer x = stack.mallocDouble(1);
+	    DoubleBuffer y = stack.mallocDouble(1);
+	    glfwGetCursorPos(handle, x, y);
+
+	    cursorPos = new Vector2d(x.get(0), y.get(0));
+	}
     }
 
     /**
@@ -133,8 +143,9 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
             bus.dispatchEvent(new WindowFramebufferSizeEvent(this, new Vector2i(width, height)));
         });
         glfwSetCursorPosCallback(handle, (window, x, y) -> {
+	    Vector2d prevCursorPos = cursorPos;
             cursorPos = new Vector2d(x, y);
-            bus.dispatchEvent(new MouseMoveEvent(this, cursorPos));
+            bus.dispatchEvent(new MouseMoveEvent(this, cursorPos, prevCursorPos));
         });
         glfwSetMouseButtonCallback(handle, (window, button, action, mods) -> {
             MouseButton mouseButton = getMouseButton(button);
