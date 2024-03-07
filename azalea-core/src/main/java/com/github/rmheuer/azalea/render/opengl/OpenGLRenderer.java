@@ -66,7 +66,27 @@ public final class OpenGLRenderer implements Renderer {
         setEnabled(GL_BLEND, pipeline.isBlend());
         if (pipeline.isBlend())
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        setEnabled(GL_DEPTH_TEST, pipeline.isDepthTest());
+
+        boolean depthTest = pipeline.isDepthTest();
+        if (depthTest) {
+            glEnable(GL_DEPTH_TEST);
+
+            int func;
+            switch (pipeline.getDepthFunc()) {
+                case NEVER: func = GL_NEVER; break;
+                case LESS: func = GL_LESS; break;
+                case EQUAL: func = GL_EQUAL; break;
+                case LESS_OR_EQUAL: func = GL_LEQUAL; break;
+                case GREATER: func = GL_GREATER; break;
+                case NOT_EQUAL: func = GL_NOTEQUAL; break;
+                case GREATER_OR_EQUAL: func = GL_GEQUAL; break;
+                case ALWAYS: func = GL_ALWAYS; break;
+                default: throw new IllegalArgumentException("Unknown depth function: " + pipeline.getDepthFunc());
+            }
+            glDepthFunc(func);
+        } else {
+            glDisable(GL_DEPTH_TEST);
+        }
 
         if (pipeline.getCullMode() == CullMode.OFF) {
             glDisable(GL_CULL_FACE);
