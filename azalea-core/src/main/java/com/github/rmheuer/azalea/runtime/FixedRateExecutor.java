@@ -9,6 +9,7 @@ public final class FixedRateExecutor {
     private final Consumer<Float> fn;
     private float period;
     private float unprocessedTime;
+    private boolean enabled;
 
     /**
      * @param period time in seconds between each call
@@ -18,6 +19,7 @@ public final class FixedRateExecutor {
         this.period = period;
         this.fn = fn;
         unprocessedTime = 0;
+        enabled = true;
     }
 
     /**
@@ -49,5 +51,16 @@ public final class FixedRateExecutor {
      */
     public void setPeriod(float period) {
         this.period = period;
+    }
+
+    /**
+     * Sets whether the periodic function should be called.
+     *
+     * @param enabled whether to call the periodic function
+     */
+    public void setEnabled(boolean enabled) {
+        if (!this.enabled && enabled)
+            unprocessedTime = 0;
+        this.enabled = enabled;
     }
 }
