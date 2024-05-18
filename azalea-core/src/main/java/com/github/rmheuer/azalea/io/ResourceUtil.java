@@ -36,20 +36,19 @@ public final class ResourceUtil {
     }
 
     /**
-     * Gets the {@code Path} of a resource directory. This can be used to
-     * iterate the files within the directory.
+     * Gets the {@code Path} of a resource.
      *
-     * @param dir resource path to the directory
-     * @return NIO Path of the directory
+     * @param jarPath resource path
+     * @return NIO Path
      * @throws IOException if an IO error occurs
      */
-    public static Path getDirectoryPath(String dir) throws IOException {
-        if (dir.isEmpty())
-            throw new IllegalArgumentException("directory cannot be empty");
+    public static Path getPath(String jarPath) throws IOException {
+        if (jarPath.isEmpty())
+            throw new IllegalArgumentException("input cannot be empty");
 
-        URL url = ResourceUtil.class.getClassLoader().getResource(dir);
+        URL url = ResourceUtil.class.getClassLoader().getResource(jarPath);
         if (url == null)
-            throw new FileNotFoundException("Directory not found: " + dir);
+            throw new FileNotFoundException("Resource not found: " + jarPath);
 
         URI uri;
         try {
