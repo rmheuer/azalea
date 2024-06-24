@@ -30,9 +30,9 @@ public interface Renderer {
     /**
      * Sets the color used to fill the window when clearing the color buffer.
      *
-     * @param color new clear color
+     * @param colorRGBA new clear color
      */
-    void setClearColor(ColorRGBA color);
+    void setClearColor(int colorRGBA);
 
     /**
      * Clears the contents of the specified buffers.

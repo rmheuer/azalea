@@ -19,7 +19,7 @@ final class VertexBatch {
     public static final VertexLayout LAYOUT = new VertexLayout(
             AttribType.VEC3, // Position
             AttribType.VEC2, // Texture coord
-            AttribType.VEC4, // Color
+            AttribType.COLOR_RGBA, // Color
             AttribType.FLOAT // Texture slot
     );
 
@@ -68,7 +68,8 @@ final class VertexBatch {
 
         data.putVec3(v.getPos())
                 .putVec2(v.getU(), v.getV())
-                .putVec4(v.getColor())
+//                .putVec4(v.getColor())
+                .putColorRGBA(v.getColor())
                 .putFloat(textureSlot);
 
         return true;

@@ -1,9 +1,8 @@
 package com.github.rmheuer.azalea.render.texture;
 
 import com.github.rmheuer.azalea.io.IOUtil;
-import com.github.rmheuer.azalea.render.ColorRGBA;
+import com.github.rmheuer.azalea.render.Colors;
 import com.github.rmheuer.azalea.utils.SizeOf;
-import org.joml.Vector2i;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -18,54 +17,6 @@ import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 
 /** A 2D RGBA texture stored with CPU access. */
 public final class Bitmap implements BitmapRegion {
-    /** The number of bits the red component is shifted left. */
-    public static final int RED_SHIFT   = 0;
-    /** The number of bits the green component is shifted left. */
-    public static final int GREEN_SHIFT = 8;
-    /** The number of bits the blue component is shifted left. */
-    public static final int BLUE_SHIFT  = 16;
-    /** The number of bits the alpha component is shifted left. */
-    public static final int ALPHA_SHIFT = 24;
-
-    /** Bitmask for the red component. */
-    public static final int RED_MASK   = 0xFF << RED_SHIFT;
-    /** Bitmask for the green component. */
-    public static final int GREEN_MASK = 0xFF << GREEN_SHIFT;
-    /** Bitmask for the blue component. */
-    public static final int BLUE_MASK  = 0xFF << BLUE_SHIFT;
-    /** Bitmask for the alpha component. */
-    public static final int ALPHA_MASK = 0xFF << ALPHA_SHIFT;
-
-    /**
-     * Encodes a color into packed RGBA.
-     *
-     * @param color color to encode
-     * @return packed RGBA color
-     */
-    public static int encodeColor(ColorRGBA color) {
-        int r = (int) (color.getRed() * 255);
-        int g = (int) (color.getGreen() * 255);
-        int b = (int) (color.getBlue() * 255);
-        int a = (int) (color.getAlpha() * 255);
-
-        return r << RED_SHIFT | g << GREEN_SHIFT | b << BLUE_SHIFT | a << ALPHA_SHIFT;
-    }
-
-    /**
-     * Decodes a color from packed RGBA.
-     *
-     * @param color packed RGBA color to decode
-     * @return decoded color
-     */
-    public static ColorRGBA decodeColor(int color) {
-        int r = (color & RED_MASK)   >>> RED_SHIFT;
-        int g = (color & GREEN_MASK) >>> GREEN_SHIFT;
-        int b = (color & BLUE_MASK)  >>> BLUE_SHIFT;
-        int a = (color & ALPHA_MASK) >>> ALPHA_SHIFT;
-
-        return ColorRGBA.rgba(r, g, b, a);
-    }
-
     /**
      * Reads and decodes a bitmap from an {@code InputStream}. This will take
      * ownership of the stream.
@@ -118,7 +69,7 @@ public final class Bitmap implements BitmapRegion {
      * @param height height to create in pixels
      */
     public Bitmap(int width, int height) {
-        this(width, height, ColorRGBA.white());
+        this(width, height, Colors.RGBA.WHITE);
     }
 
     /**
@@ -127,13 +78,11 @@ public final class Bitmap implements BitmapRegion {
      *
      * @param width width to create in pixels
      * @param height height to create in pixels
-     * @param fillColor color to fill with
+     * @param fillColorRGBA color to fill with
      */
-    public Bitmap(int width, int height, ColorRGBA fillColor) {
+    public Bitmap(int width, int height, int fillColorRGBA) {
         this(width, height, new int[width * height]);
-
-        int fill = encodeColor(fillColor);
-        Arrays.fill(rgbaData, fill);
+        Arrays.fill(rgbaData, fillColorRGBA);
     }
 
     /**
@@ -157,15 +106,15 @@ public final class Bitmap implements BitmapRegion {
     }
 
     @Override
-    public ColorRGBA getPixel(int x, int y) {
+    public int getPixel(int x, int y) {
         checkBounds(x, y);
-        return decodeColor(rgbaData[pixelIdx(x, y)]);
+        return rgbaData[pixelIdx(x, y)];
     }
 
     @Override
-    public void setPixel(int x, int y, ColorRGBA color) {
+    public void setPixel(int x, int y, int colorRGBA) {
         checkBounds(x, y);
-        rgbaData[pixelIdx(x, y)] = encodeColor(color);
+        rgbaData[pixelIdx(x, y)] = colorRGBA;
     }
 
     @Override

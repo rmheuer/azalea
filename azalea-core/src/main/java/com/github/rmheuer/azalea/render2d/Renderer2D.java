@@ -1,7 +1,7 @@
 package com.github.rmheuer.azalea.render2d;
 
 import com.github.rmheuer.azalea.io.ResourceUtil;
-import com.github.rmheuer.azalea.render.ColorRGBA;
+import com.github.rmheuer.azalea.render.Colors;
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.mesh.Mesh;
 import com.github.rmheuer.azalea.render.mesh.MeshData;
@@ -45,7 +45,7 @@ public final class Renderer2D implements SafeCloseable {
             throw new RuntimeException("Failed to load built-in shaders", e);
         }
 
-        Bitmap whiteData = new Bitmap(1, 1, ColorRGBA.white());
+        Bitmap whiteData = new Bitmap(1, 1, Colors.RGBA.WHITE);
         whiteTex = renderer.createTexture2D();
         whiteTex.setData(whiteData);
 

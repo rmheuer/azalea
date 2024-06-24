@@ -25,9 +25,9 @@ public abstract class Font implements SafeCloseable {
      * @param text the text to draw
      * @param x x position of the left side of the text
      * @param y y position of the baseline of the text
-     * @param color color to draw the text
+     * @param colorRGBA color to draw the text
      */
-    public void draw(DrawList2D r, String text, float x, float y, Vector4f color) {
+    public void draw(DrawList2D r, String text, float x, float y, int colorRGBA) {
         for (char c : text.toCharArray()) {
             GlyphInfo glyph = getGlyph(c);
             if (glyph == null) {
@@ -38,7 +38,7 @@ public abstract class Font implements SafeCloseable {
                     x + glyph.getOffset().x, y + glyph.getOffset().y,
                     glyph.getSize(),
                     glyph.getTexture(),
-                    color,
+                    colorRGBA,
                     glyph.getUVMin().x, glyph.getUVMin().y,
                     glyph.getUVMax().x, glyph.getUVMax().y
             );

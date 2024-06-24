@@ -15,7 +15,7 @@ public abstract class BaseGame extends Game {
     private final FPSCounter fpsCounter;
     private final AudioSystem audioSystem;
 
-    private ColorRGBA backgroundColor;
+    private int backgroundColor;
 
     /**
      * Initializes the engine systems.
@@ -30,7 +30,7 @@ public abstract class BaseGame extends Game {
         fpsCounter = new FPSCounter();
         audioSystem = new AudioSystem();
 
-        backgroundColor = new ColorRGBA(0.2f, 0.2f, 0.2f);
+        backgroundColor = Colors.RGBA.fromFloats(0.2f, 0.2f, 0.2f);
     }
 
     /**
@@ -128,18 +128,18 @@ public abstract class BaseGame extends Game {
     /**
      * Gets the current background color.
      *
-     * @return background color
+     * @return background RGBA color
      */
-    public ColorRGBA getBackgroundColor() {
+    public int getBackgroundColor() {
         return backgroundColor;
     }
 
     /**
      * Sets the background color.
      *
-     * @param backgroundColor new background color
+     * @param backgroundColorRGBA new background RGBA color
      */
-    public void setBackgroundColor(ColorRGBA backgroundColor) {
-        this.backgroundColor = backgroundColor;
+    public void setBackgroundColor(int backgroundColorRGBA) {
+        this.backgroundColor = backgroundColorRGBA;
     }
 }

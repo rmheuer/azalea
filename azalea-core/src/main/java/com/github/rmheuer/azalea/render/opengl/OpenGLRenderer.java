@@ -1,7 +1,7 @@
 package com.github.rmheuer.azalea.render.opengl;
 
 import com.github.rmheuer.azalea.render.BufferType;
-import com.github.rmheuer.azalea.render.ColorRGBA;
+import com.github.rmheuer.azalea.render.Colors;
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.mesh.Mesh;
 import com.github.rmheuer.azalea.render.pipeline.ActivePipeline;
@@ -26,8 +26,13 @@ public final class OpenGLRenderer implements Renderer {
     }
 
     @Override
-    public void setClearColor(ColorRGBA color) {
-        glClearColor(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+    public void setClearColor(int colorRGBA) {
+        glClearColor(
+                Colors.RGBA.getRed(colorRGBA) / 255.0f,
+                Colors.RGBA.getGreen(colorRGBA) / 255.0f,
+                Colors.RGBA.getBlue(colorRGBA) / 255.0f,
+                Colors.RGBA.getAlpha(colorRGBA) / 255.0f
+        );
     }
 
     @Override

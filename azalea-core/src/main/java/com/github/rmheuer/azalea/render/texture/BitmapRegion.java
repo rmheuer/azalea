@@ -1,6 +1,5 @@
 package com.github.rmheuer.azalea.render.texture;
 
-import com.github.rmheuer.azalea.render.ColorRGBA;
 import org.joml.Vector2i;
 
 /**
@@ -9,21 +8,21 @@ import org.joml.Vector2i;
  */
 public interface BitmapRegion {
     /**
-     * Gets the color of a pixel.
+     * Gets the RGBA color of a pixel.
      *
      * @param x x coordinate of the pixel
      * @param y y coordinate of the pixel
-     * @return color of the pixel
+     * @return RGBA color of the pixel
      */
-    ColorRGBA getPixel(int x, int y);
+    int getPixel(int x, int y);
 
     /**
-     * Gets the color of a pixel.
+     * Gets the RGBA color of a pixel.
      *
      * @param pos coordinates of the pixel
-     * @return color of the pixel
+     * @return RGBA color of the pixel
      */
-    default ColorRGBA getPixel(Vector2i pos) {
+    default int getPixel(Vector2i pos) {
         return getPixel(pos.x, pos.y);
     }
 
@@ -32,18 +31,18 @@ public interface BitmapRegion {
      *
      * @param x x coordinate of the pixel
      * @param y y coordinate of the pixel
-     * @param color new color for the pixel
+     * @param colorRGBA new color for the pixel
      */
-    void setPixel(int x, int y, ColorRGBA color);
+    void setPixel(int x, int y, int colorRGBA);
 
     /**
      * Sets the color of a pixel.
      *
      * @param pos coordinates of the pixel
-     * @param color new color for the pixel
+     * @param colorRGBA new color for the pixel
      */
-    default void setPixel(Vector2i pos, ColorRGBA color) {
-        setPixel(pos.x, pos.y, color);
+    default void setPixel(Vector2i pos, int colorRGBA) {
+        setPixel(pos.x, pos.y, colorRGBA);
     }
 
     /**

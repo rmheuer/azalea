@@ -42,6 +42,18 @@ public final class MathUtil {
     }
 
     /**
+     * Linearly interpolates between two values.
+     *
+     * @param a beginning value
+     * @param b end value
+     * @param f fraction between the values
+     * @return interpolated value
+     */
+    public static int lerpInt(int a, int b, float f) {
+        return (int) (a + (b - a) * f);
+    }
+
+    /**
      * Maps a value from one range into another.
      *
      * @param val value to map

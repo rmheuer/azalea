@@ -11,10 +11,10 @@ import org.joml.Vector4f;
 final class DrawVertex {
     private final Vector3f pos;
     private final float u, v;
-    private final Vector4f color;
+    private final int color; // RGBA
     private final Texture2DRegion tex;
 
-    public DrawVertex(Vector3f pos, float u, float v, Vector4f color, Texture2DRegion tex) {
+    public DrawVertex(Vector3f pos, float u, float v, int color, Texture2DRegion tex) {
         this.pos = pos;
         this.u = u;
         this.v = v;
@@ -34,7 +34,7 @@ final class DrawVertex {
         return v;
     }
 
-    public Vector4f getColor() {
+    public int getColor() {
         return color;
     }
 

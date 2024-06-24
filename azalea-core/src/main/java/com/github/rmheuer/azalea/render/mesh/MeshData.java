@@ -1,5 +1,6 @@
 package com.github.rmheuer.azalea.render.mesh;
 
+import com.github.rmheuer.azalea.render.Colors;
 import com.github.rmheuer.azalea.utils.SafeCloseable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -7,6 +8,7 @@ import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +20,7 @@ import java.util.List;
  */
 public final class MeshData implements SafeCloseable {
     private static final int INITIAL_CAPACITY = 16;
+    private static final boolean IS_LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
 
     private final PrimitiveType primType;
     private final VertexLayout layout;
@@ -171,6 +174,25 @@ public final class MeshData implements SafeCloseable {
         vertexBuf.putFloat(y);
         vertexBuf.putFloat(z);
         vertexBuf.putFloat(w);
+        return this;
+    }
+
+    public MeshData putColorRGBA(int rgba) {
+        prepare(AttribType.COLOR_RGBA);
+
+        if (IS_LITTLE_ENDIAN) {
+            // OpenGL wants color in R, G, B, A order
+            // Int is in A, B, G, R order (big to little)
+            // If system is little-endian, we can directly put int
+            // Otherwise, we need to reorder the bytes
+            vertexBuf.putInt(rgba);
+        } else {
+            vertexBuf.put((byte) Colors.RGBA.getRed(rgba));
+            vertexBuf.put((byte) Colors.RGBA.getGreen(rgba));
+            vertexBuf.put((byte) Colors.RGBA.getBlue(rgba));
+            vertexBuf.put((byte) Colors.RGBA.getAlpha(rgba));
+        }
+
         return this;
     }
 
