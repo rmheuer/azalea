@@ -56,9 +56,10 @@ public final class JsonDeserializer {
         }
 
         public void expect(String str) {
-            // TODO: Do this better so the error message can be more helpful
             for (char c : str.toCharArray()) {
-                expect(c);
+                char n = next();
+                if (n != c)
+                    throw new JsonParseException("Expected '" + c + "', found '" + n + "' (in string '" + str + "')");
             }
         }
 

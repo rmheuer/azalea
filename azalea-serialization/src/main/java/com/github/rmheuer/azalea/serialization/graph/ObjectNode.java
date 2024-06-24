@@ -34,6 +34,10 @@ public final class ObjectNode implements DataNode {
         return values.put(key, dataNode);
     }
 
+    public void putAll(ObjectNode other) {
+        values.putAll(other.values);
+    }
+
     public DataNode remove(String key) {
         return values.remove(key);
     }

@@ -45,6 +45,10 @@ public final class ArrayNode implements DataNode, Iterable<DataNode> {
         return values;
     }
 
+    public int size() {
+        return values.size();
+    }
+
     @Override
     public Iterator<DataNode> iterator() {
         return values.iterator();
