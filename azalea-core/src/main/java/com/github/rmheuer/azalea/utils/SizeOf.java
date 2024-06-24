@@ -1,5 +1,8 @@
 package com.github.rmheuer.azalea.utils;
 
+/**
+ * Sizes of primitive types in bytes.
+ */
 public final class SizeOf {
     public static final int BYTE = 1;
     public static final int SHORT = 2;

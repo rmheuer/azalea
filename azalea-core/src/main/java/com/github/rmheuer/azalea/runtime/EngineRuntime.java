@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public final class EngineRuntime {
+final class EngineRuntime {
     private static final String JVM_RESTARTED_PROP = "azalea.jvmRestarted";
 
     /**
@@ -55,7 +55,7 @@ public final class EngineRuntime {
      * @param args command-line arguments from the main() method
      * @return whether this JVM should exit immediately
      */
-    public static boolean restartForMacOS(String[] args) {
+    static boolean restartForMacOS(String[] args) {
         String osName = System.getProperty("os.name");
 
         if (!osName.startsWith("Mac") && !osName.startsWith("Darwin"))

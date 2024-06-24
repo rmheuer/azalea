@@ -2,10 +2,24 @@ package com.github.rmheuer.azalea.render.texture;
 
 import org.joml.Vector2f;
 
+/**
+ * A 2D texture on the GPU.
+ */
 public interface Texture2D extends Texture, Texture2DRegion {
+    /**
+     * Uploads a set of bitmap data to the GPU.
+     *
+     * @param data data to upload
+     */
     void setData(BitmapRegion data);
 
-    // Sets a section of the texture data on GPU, leaving the rest the same
+    /**
+     * Sets a section of the texture data on GPU, leaving the rest the same.
+     *
+     * @param data data to upload
+     * @param x x coordinate to upload into
+     * @param y y coordinate to upload into
+     */
     void setSubData(BitmapRegion data, int x, int y);
 
     @Override
@@ -14,12 +28,12 @@ public interface Texture2D extends Texture, Texture2DRegion {
     }
 
     @Override
-    default Vector2f getRegionMinUV() {
+    default Vector2f getRegionTopLeftUV() {
         return new Vector2f(0, 0);
     }
 
     @Override
-    default Vector2f getRegionMaxUV() {
+    default Vector2f getRegionBottomRightUV() {
         return new Vector2f(1, 1);
     }
 }

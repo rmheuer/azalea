@@ -7,6 +7,9 @@ import java.nio.ShortBuffer;
 
 import static org.lwjgl.openal.AL10.*;
 
+/**
+ * Represents a playing {@link AudioStream}.
+ */
 public final class PlayingStream extends PlayingSound {
     private static final int BUFFER_COUNT = 3;
 

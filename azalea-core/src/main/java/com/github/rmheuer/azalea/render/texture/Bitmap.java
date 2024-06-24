@@ -1,9 +1,8 @@
 package com.github.rmheuer.azalea.render.texture;
 
 import com.github.rmheuer.azalea.io.IOUtil;
-import com.github.rmheuer.azalea.render.ColorRGBA;
+import com.github.rmheuer.azalea.render.Colors;
 import com.github.rmheuer.azalea.utils.SizeOf;
-import org.joml.Vector2i;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -16,35 +15,16 @@ import java.util.Arrays;
 import static org.lwjgl.stb.STBImage.stbi_image_free;
 import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 
+/** A 2D RGBA texture stored with CPU access. */
 public final class Bitmap implements BitmapRegion {
-    public static final int RED_SHIFT   = 0;
-    public static final int GREEN_SHIFT = 8;
-    public static final int BLUE_SHIFT  = 16;
-    public static final int ALPHA_SHIFT = 24;
-
-    public static final int RED_MASK   = 0xFF << RED_SHIFT;
-    public static final int GREEN_MASK = 0xFF << GREEN_SHIFT;
-    public static final int BLUE_MASK  = 0xFF << BLUE_SHIFT;
-    public static final int ALPHA_MASK = 0xFF << ALPHA_SHIFT;
-
-    public static int encodeColor(ColorRGBA color) {
-        int r = (int) (color.getRed() * 255);
-        int g = (int) (color.getGreen() * 255);
-        int b = (int) (color.getBlue() * 255);
-        int a = (int) (color.getAlpha() * 255);
-
-        return r << RED_SHIFT | g << GREEN_SHIFT | b << BLUE_SHIFT | a << ALPHA_SHIFT;
-    }
-
-    public static ColorRGBA decodeColor(int color) {
-        int r = (color & RED_MASK)   >>> RED_SHIFT;
-        int g = (color & GREEN_MASK) >>> GREEN_SHIFT;
-        int b = (color & BLUE_MASK)  >>> BLUE_SHIFT;
-        int a = (color & ALPHA_MASK) >>> ALPHA_SHIFT;
-
-        return ColorRGBA.rgba(r, g, b, a);
-    }
-
+    /**
+     * Reads and decodes a bitmap from an {@code InputStream}. This will take
+     * ownership of the stream.
+     *
+     * @param in input stream to read from
+     * @return decoded bitmap
+     * @throws IOException if an IO error occurs
+     */
     public static Bitmap decode(InputStream in) throws IOException {
         ByteBuffer data = IOUtil.readToByteBuffer(in);
 
@@ -82,17 +62,36 @@ public final class Bitmap implements BitmapRegion {
     private final int height;
     private final int[] rgbaData;
 
+    /**
+     * Creates a new empty bitmap with the specified size, filled with white.
+     *
+     * @param width width to create in pixels
+     * @param height height to create in pixels
+     */
     public Bitmap(int width, int height) {
-        this(width, height, ColorRGBA.white());
+        this(width, height, Colors.RGBA.WHITE);
     }
 
-    public Bitmap(int width, int height, ColorRGBA fillColor) {
+    /**
+     * Creates a new bitmap with the specified size, filled with the specified
+     * color.
+     *
+     * @param width width to create in pixels
+     * @param height height to create in pixels
+     * @param fillColorRGBA color to fill with
+     */
+    public Bitmap(int width, int height, int fillColorRGBA) {
         this(width, height, new int[width * height]);
-
-        int fill = encodeColor(fillColor);
-        Arrays.fill(rgbaData, fill);
+        Arrays.fill(rgbaData, fillColorRGBA);
     }
 
+    /**
+     * Creates a new bitmap with provided RGBA data.
+     *
+     * @param width width in pixels
+     * @param height height in pixels
+     * @param rgbaData packed RGBA data, should have length {@code width*height}.
+     */
     public Bitmap(int width, int height, int[] rgbaData) {
         if (rgbaData.length != width * height)
             throw new IllegalArgumentException("RGBA data is wrong size");
@@ -107,15 +106,15 @@ public final class Bitmap implements BitmapRegion {
     }
 
     @Override
-    public ColorRGBA getPixel(int x, int y) {
+    public int getPixel(int x, int y) {
         checkBounds(x, y);
-        return decodeColor(rgbaData[pixelIdx(x, y)]);
+        return rgbaData[pixelIdx(x, y)];
     }
 
     @Override
-    public void setPixel(int x, int y, ColorRGBA color) {
+    public void setPixel(int x, int y, int colorRGBA) {
         checkBounds(x, y);
-        rgbaData[pixelIdx(x, y)] = encodeColor(color);
+        rgbaData[pixelIdx(x, y)] = colorRGBA;
     }
 
     @Override

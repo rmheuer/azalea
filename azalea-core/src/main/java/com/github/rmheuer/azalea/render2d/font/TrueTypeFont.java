@@ -22,6 +22,9 @@ import java.nio.IntBuffer;
 import static org.lwjgl.stb.STBTruetype.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
+/**
+ * A font loaded from a TTF file.
+ */
 public final class TrueTypeFont extends Font {
     private static final char CHAR_BASE = 32;
     private static final char CHAR_COUNT = 96;
@@ -36,6 +39,14 @@ public final class TrueTypeFont extends Font {
         return -x;
     }
 
+    /**
+     * Loads a TTF font from an {@code InputStream}.
+     *
+     * @param renderer renderer to use to create the font texture
+     * @param in input stream to read the TTF file from
+     * @param heightPx desired pixel height of the text
+     * @throws IOException if an IO error occurs while reading
+     */
     public TrueTypeFont(Renderer renderer, InputStream in, float heightPx) throws IOException {
         ttf = IOUtil.readToByteBuffer(in);
         this.heightPx = heightPx;
@@ -120,6 +131,11 @@ public final class TrueTypeFont extends Font {
         cdata.free();
     }
 
+    /**
+     * Gets the pixel height of this font.
+     *
+     * @return pixel height
+     */
     public float getHeightPx() {
         return heightPx;
     }

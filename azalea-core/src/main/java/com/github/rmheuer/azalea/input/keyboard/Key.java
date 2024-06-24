@@ -1,5 +1,8 @@
 package com.github.rmheuer.azalea.input.keyboard;
 
+/**
+ * The keys on a standard US keyboard.
+ */
 public enum Key {
     UNKNOWN("Unknown"),
     SPACE("Space"),
@@ -128,6 +131,11 @@ public enum Key {
         this.name = name;
     }
 
+    /**
+     * Gets the human-readable name of this key.
+     *
+     * @return name
+     */
     public String getName() {
         return name;
     }

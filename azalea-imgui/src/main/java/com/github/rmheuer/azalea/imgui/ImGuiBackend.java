@@ -15,12 +15,20 @@ import imgui.ImGuiIO;
 import imgui.flag.ImGuiConfigFlags;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
+import org.lwjgl.opengl.GL33C;
 
+/**
+ * ImGui backend implementation to render ImGui into an engine window.
+ */
 public final class ImGuiBackend implements SafeCloseable, Listener {
     private final ImGuiImplGlfw implGlfw;
     private final ImGuiImplGl3 implGl3;
     private final Keyboard maskedKeyboard;
 
+    /**
+     * @param window window to render into
+     * @param eventBus event bus to receive input events from
+     */
     public ImGuiBackend(Window window, EventBus eventBus) {
         eventBus.registerListener(this);
 
@@ -45,13 +53,13 @@ public final class ImGuiBackend implements SafeCloseable, Listener {
     }
 
     // Cancel input events that ImGui captured
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.FIRST)
     public void onKeyboardEvent(KeyboardEvent event) {
         if (ImGui.getIO().getWantCaptureKeyboard())
             event.cancel();
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.FIRST)
     public void onMouseEvent(MouseEvent event) {
         if (ImGui.getIO().getWantCaptureMouse())
             event.cancel();
@@ -64,6 +72,7 @@ public final class ImGuiBackend implements SafeCloseable, Listener {
 
     public void endFrameAndRender() {
         ImGui.render();
+        GL33C.glPolygonMode(GL33C.GL_FRONT_AND_BACK, GL33C.GL_FILL);
         implGl3.renderDrawData(ImGui.getDrawData());
     }
 

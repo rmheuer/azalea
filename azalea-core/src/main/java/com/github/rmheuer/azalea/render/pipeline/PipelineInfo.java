@@ -6,15 +6,19 @@ public final class PipelineInfo {
     private final ShaderProgram shader;
     private boolean blend;
     private boolean depthTest;
+    private DepthFunc depthFunc;
     private CullMode cullMode;
     private FaceWinding winding;
+    private FillMode fillMode;
 
     public PipelineInfo(ShaderProgram shader) {
         this.shader = shader;
         blend = true;
         depthTest = false;
+        depthFunc = DepthFunc.LESS_OR_EQUAL;
         cullMode = CullMode.OFF;
         winding = FaceWinding.CW_FRONT;
+        fillMode = FillMode.FILLED;
     }
 
     public PipelineInfo setBlend(boolean blend) {
@@ -27,6 +31,10 @@ public final class PipelineInfo {
         return this;
     }
 
+    public void setDepthFunc(DepthFunc depthFunc) {
+        this.depthFunc = depthFunc;
+    }
+
     public PipelineInfo setCullMode(CullMode cullMode) {
         this.cullMode = cullMode;
         return this;
@@ -34,6 +42,11 @@ public final class PipelineInfo {
 
     public PipelineInfo setWinding(FaceWinding winding) {
         this.winding = winding;
+        return this;
+    }
+
+    public PipelineInfo setFillMode(FillMode fillMode) {
+        this.fillMode = fillMode;
         return this;
     }
 
@@ -49,11 +62,19 @@ public final class PipelineInfo {
         return depthTest;
     }
 
+    public DepthFunc getDepthFunc() {
+        return depthFunc;
+    }
+
     public CullMode getCullMode() {
         return cullMode;
     }
 
     public FaceWinding getWinding() {
         return winding;
+    }
+
+    public FillMode getFillMode() {
+        return fillMode;
     }
 }

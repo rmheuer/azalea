@@ -1,12 +1,13 @@
 package com.github.rmheuer.azalea.render.opengl;
 
 import com.github.rmheuer.azalea.render.BufferType;
-import com.github.rmheuer.azalea.render.ColorRGBA;
+import com.github.rmheuer.azalea.render.Colors;
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.mesh.Mesh;
 import com.github.rmheuer.azalea.render.pipeline.ActivePipeline;
 import com.github.rmheuer.azalea.render.pipeline.CullMode;
 import com.github.rmheuer.azalea.render.pipeline.FaceWinding;
+import com.github.rmheuer.azalea.render.pipeline.FillMode;
 import com.github.rmheuer.azalea.render.pipeline.PipelineInfo;
 import com.github.rmheuer.azalea.render.shader.ShaderProgram;
 import com.github.rmheuer.azalea.render.shader.ShaderStage;
@@ -25,8 +26,13 @@ public final class OpenGLRenderer implements Renderer {
     }
 
     @Override
-    public void setClearColor(ColorRGBA color) {
-        glClearColor(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+    public void setClearColor(int colorRGBA) {
+        glClearColor(
+                Colors.RGBA.getRed(colorRGBA) / 255.0f,
+                Colors.RGBA.getGreen(colorRGBA) / 255.0f,
+                Colors.RGBA.getBlue(colorRGBA) / 255.0f,
+                Colors.RGBA.getAlpha(colorRGBA) / 255.0f
+        );
     }
 
     @Override
@@ -65,7 +71,27 @@ public final class OpenGLRenderer implements Renderer {
         setEnabled(GL_BLEND, pipeline.isBlend());
         if (pipeline.isBlend())
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        setEnabled(GL_DEPTH_TEST, pipeline.isDepthTest());
+
+        boolean depthTest = pipeline.isDepthTest();
+        if (depthTest) {
+            glEnable(GL_DEPTH_TEST);
+
+            int func;
+            switch (pipeline.getDepthFunc()) {
+                case NEVER: func = GL_NEVER; break;
+                case LESS: func = GL_LESS; break;
+                case EQUAL: func = GL_EQUAL; break;
+                case LESS_OR_EQUAL: func = GL_LEQUAL; break;
+                case GREATER: func = GL_GREATER; break;
+                case NOT_EQUAL: func = GL_NOTEQUAL; break;
+                case GREATER_OR_EQUAL: func = GL_GEQUAL; break;
+                case ALWAYS: func = GL_ALWAYS; break;
+                default: throw new IllegalArgumentException("Unknown depth function: " + pipeline.getDepthFunc());
+            }
+            glDepthFunc(func);
+        } else {
+            glDisable(GL_DEPTH_TEST);
+        }
 
         if (pipeline.getCullMode() == CullMode.OFF) {
             glDisable(GL_CULL_FACE);
@@ -74,6 +100,8 @@ public final class OpenGLRenderer implements Renderer {
             glCullFace(pipeline.getCullMode() == CullMode.FRONT ? GL_FRONT : GL_BACK);
             glFrontFace(pipeline.getWinding() == FaceWinding.CW_FRONT ? GL_CW : GL_CCW);
         }
+
+        glPolygonMode(GL_FRONT_AND_BACK, pipeline.getFillMode() == FillMode.FILLED ? GL_FILL : GL_LINE);
 
         return new ActivePipelineImpl(shader);
     }

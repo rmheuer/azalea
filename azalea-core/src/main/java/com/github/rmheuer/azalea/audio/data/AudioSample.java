@@ -15,7 +15,12 @@ import static org.lwjgl.openal.AL10.*;
 import static org.lwjgl.stb.STBVorbis.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-// An audio sample, loaded fully into memory
+//
+
+/**
+ * An audio sample, loaded fully into memory. This should be used for relatively
+ * short samples so you don't have as much data loaded into memory.
+ */
 public final class AudioSample implements AudioData {
     private final int buffer;
 
@@ -54,6 +59,11 @@ public final class AudioSample implements AudioData {
         }
     }
 
+    /**
+     * Gets the OpenAL buffer name this data is stored in
+     *
+     * @return OpenAL buffer name
+     */
     public int getBuffer() {
         return buffer;
     }

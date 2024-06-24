@@ -52,11 +52,32 @@ public interface Window extends SafeCloseable {
      */
     Vector2i getFramebufferSize();
 
+    /**
+     * Gets the size of the window.
+     *
+     * @return window size
+     */
     Vector2i getSize();
 
+    /**
+     * Gets the window's keyboard input.
+     *
+     * @return keyboard input
+     */
     Keyboard getKeyboard();
+
+    /**
+     * Gets the window's mouse input.
+     *
+     * @return mouse input
+     */
     Mouse getMouse();
 
+    /**
+     * Registers this window with the {@code EventBus} so it can send events.
+     *
+     * @param bus event bus to receive events
+     */
     void registerEvents(EventBus bus);
 
     /**

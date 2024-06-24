@@ -1,8 +1,6 @@
 package com.github.rmheuer.azalea.render.texture;
 
-import com.github.rmheuer.azalea.render.ColorRGBA;
-
-public final class SubBitmap implements BitmapRegion {
+final class SubBitmap implements BitmapRegion {
     private final Bitmap srcBitmap;
     private final int x, y, width, height;
 
@@ -21,15 +19,15 @@ public final class SubBitmap implements BitmapRegion {
     }
 
     @Override
-    public ColorRGBA getPixel(int x, int y) {
+    public int getPixel(int x, int y) {
         checkBounds(x, y);
         return srcBitmap.getPixel(this.x + x, this.y + y);
     }
 
     @Override
-    public void setPixel(int x, int y, ColorRGBA color) {
+    public void setPixel(int x, int y, int colorRGBA) {
         checkBounds(x, y);
-        srcBitmap.setPixel(this.x + x, this.y + y, color);
+        srcBitmap.setPixel(this.x + x, this.y + y, colorRGBA);
     }
 
     @Override

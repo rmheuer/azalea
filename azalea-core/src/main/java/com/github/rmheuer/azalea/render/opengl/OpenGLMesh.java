@@ -80,8 +80,8 @@ public final class OpenGLMesh implements Mesh {
             AttribType type = attribs[i];
             glVertexAttribPointer(i,
                     type.getElemCount(),
-                    GL_FLOAT,
-                    false,
+                    type.getValueType() == AttribType.ValueType.FLOAT ? GL_FLOAT : GL_UNSIGNED_BYTE,
+                    type.isNormalized(),
                     stride,
                     offset);
             glEnableVertexAttribArray(i);
