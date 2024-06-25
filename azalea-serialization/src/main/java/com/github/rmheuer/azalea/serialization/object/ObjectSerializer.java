@@ -39,7 +39,7 @@ public final class ObjectSerializer {
         serializers.put(type, serializer);
     }
 
-    private <T> ValueSerializer<T> getSerializer(Class<T> type) throws SerializationException {
+    private <T> ValueSerializer<T> getSerializer(Class<T> type) {
         // Guaranteed to be correct, serializers are always mapped from a class of their type
         @SuppressWarnings("unchecked")
         ValueSerializer<T> serializer = (ValueSerializer<T>) serializers.get(type);
@@ -55,13 +55,15 @@ public final class ObjectSerializer {
             return s;
         }
 
-        throw new SerializationException("No serializer defined for " + type);
+        return null;
     }
 
     private <T> DataNode serializeRaw(Class<T> type, Object value) throws SerializationException {
         @SuppressWarnings("unchecked")
         T t = (T) value;
         ValueSerializer<T> serializer = getSerializer(type);
+        if (serializer == null)
+            throw new SerializationException("No serializer defined for " + type);
         return serializer.serialize(this, t);
     }
 
@@ -84,6 +86,10 @@ public final class ObjectSerializer {
             obj.put(VALUE_KEY, raw);
         }
         return obj;
+    }
+
+    public boolean isSerializable(Class<?> type) {
+        return getSerializer(type) != null;
     }
 
     public <T> T deserialize(DataNode data, Class<T> type) throws SerializationException {
@@ -109,6 +115,8 @@ public final class ObjectSerializer {
         }
 
         ValueSerializer<?> serializer = getSerializer(serializedType);
+        if (serializer == null)
+            throw new SerializationException("No serializer defined for " + type);
         Object value = serializer.deserialize(this, data);
 
         @SuppressWarnings("unchecked")

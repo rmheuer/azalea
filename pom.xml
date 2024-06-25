@@ -12,8 +12,9 @@
     <modules>
         <module>azalea-core</module>
         <module>azalea-imgui</module>
-        <module>azalea-ecs</module>
         <module>azalea-serialization</module>
+        <module>azalea-ecs</module>
+        <module>azalea-ecs-serial</module>
     </modules>
 
     <properties>
