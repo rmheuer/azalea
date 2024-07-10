@@ -8,6 +8,7 @@ import com.github.rmheuer.azalea.render.shader.ShaderProgram;
 import com.github.rmheuer.azalea.render.shader.ShaderStage;
 import com.github.rmheuer.azalea.render.texture.Bitmap;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
+import com.github.rmheuer.azalea.render.texture.TextureCubeMap;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -142,4 +143,12 @@ public interface Renderer {
         tex.setData(bitmap);
         return tex;
     }
+
+    /**
+     * Create an empty {@code TextureCubeMap}. You will need to upload data to
+     * each face of the texture before rendering it.
+     *
+     * @return the created texture
+     */
+    TextureCubeMap createTextureCubeMap();
 }

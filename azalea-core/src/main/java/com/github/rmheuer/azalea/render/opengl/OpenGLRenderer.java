@@ -14,11 +14,16 @@ import com.github.rmheuer.azalea.render.shader.ShaderStage;
 import com.github.rmheuer.azalea.render.shader.ShaderUniform;
 import com.github.rmheuer.azalea.render.texture.Texture;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
+import com.github.rmheuer.azalea.render.texture.TextureCubeMap;
 
 import static org.lwjgl.opengl.GL33C.*;
 
 public final class OpenGLRenderer implements Renderer {
     private boolean pipelineActive = false;
+
+    public OpenGLRenderer() {
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    }
 
     @Override
     public void setViewportRect(int x, int y, int width, int height) {
@@ -124,6 +129,11 @@ public final class OpenGLRenderer implements Renderer {
     @Override
     public Texture2D createTexture2D() {
         return new OpenGLTexture2D();
+    }
+
+    @Override
+    public TextureCubeMap createTextureCubeMap() {
+        return new OpenGLTextureCubeMap();
     }
 
     private final class ActivePipelineImpl implements ActivePipeline {
