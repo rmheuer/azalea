@@ -15,19 +15,8 @@ import java.io.InputStream;
 
 /**
  * Represents a renderer used to render into a window.
- * The renderer is currently not thread-safe, but will be in the future.
  */
 public interface Renderer {
-    /**
-     * Sets the region of the viewport to render into.
-     *
-     * @param x x position of the lower-left corner
-     * @param y y position of the lower-left corner
-     * @param width width of the viewport rect
-     * @param height height of the viewport rect
-     */
-    void setViewportRect(int x, int y, int width, int height);
-
     /**
      * Sets the color used to fill the window when clearing the color buffer.
      *
@@ -46,10 +35,22 @@ public interface Renderer {
      * Binds a pipeline for use.
      *
      * @param pipeline pipeline configuration
+     * @param framebuffer framebuffer to render into
      * @return access to draw commands
      * @throws IllegalStateException if another pipeline is currently bound
      */
-    ActivePipeline bindPipeline(PipelineInfo pipeline);
+    ActivePipeline bindPipeline(PipelineInfo pipeline, Framebuffer framebuffer);
+
+    /**
+     * Binds a pipeline for use, rendering to the default framebuffer.
+     *
+     * @param pipeline pipeline configuration
+     * @return access to draw commands
+     * @throws IllegalStateException if another pipeline is currently bound
+     */
+    default ActivePipeline bindPipeline(PipelineInfo pipeline) {
+        return bindPipeline(pipeline, getDefaultFramebuffer());
+    }
 
     /**
      * Creates and compiles a shader stage from GLSL source.
@@ -151,4 +152,18 @@ public interface Renderer {
      * @return the created texture
      */
     TextureCubeMap createTextureCubeMap();
+
+    /**
+     * Gets the framebuffer used to render into the window.
+     *
+     * @return default window framebuffer
+     */
+    Framebuffer getDefaultFramebuffer();
+
+    /**
+     * Creates a {@code FramebufferBuilder} to build a framebuffer.
+     *
+     * @return the created framebuffer builder
+     */
+    FramebufferBuilder createFramebufferBuilder(int width, int height);
 }

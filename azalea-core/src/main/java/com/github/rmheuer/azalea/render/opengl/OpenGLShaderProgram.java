@@ -42,8 +42,6 @@ public final class OpenGLShaderProgram implements ShaderProgram {
     public ShaderUniform getUniform(String name) {
         return uniforms.computeIfAbsent(name, (n) -> {
             int loc = glGetUniformLocation(id, n);
-            if (loc == -1)
-                throw new IllegalArgumentException("Uniform not found: " + name);
             return new UniformImpl(loc);
         });
     }

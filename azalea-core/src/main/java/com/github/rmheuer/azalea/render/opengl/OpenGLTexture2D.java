@@ -8,6 +8,10 @@ import static org.lwjgl.opengl.GL33C.*;
 public final class OpenGLTexture2D extends OpenGLTexture implements Texture2D {
     public OpenGLTexture2D() {
         setFilters(Filter.NEAREST);
+
+        // Texture already bound from setFilters
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 
     @Override

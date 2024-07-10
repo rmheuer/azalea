@@ -1,8 +1,6 @@
 package com.github.rmheuer.azalea.render.opengl;
 
-import com.github.rmheuer.azalea.render.BufferType;
-import com.github.rmheuer.azalea.render.Colors;
-import com.github.rmheuer.azalea.render.Renderer;
+import com.github.rmheuer.azalea.render.*;
 import com.github.rmheuer.azalea.render.mesh.Mesh;
 import com.github.rmheuer.azalea.render.pipeline.ActivePipeline;
 import com.github.rmheuer.azalea.render.pipeline.CullMode;
@@ -15,19 +13,27 @@ import com.github.rmheuer.azalea.render.shader.ShaderUniform;
 import com.github.rmheuer.azalea.render.texture.Texture;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
 import com.github.rmheuer.azalea.render.texture.TextureCubeMap;
+import org.joml.Vector2i;
 
 import static org.lwjgl.opengl.GL33C.*;
 
 public final class OpenGLRenderer implements Renderer {
     private boolean pipelineActive = false;
+    private final Framebuffer defaultFramebuffer;
 
-    public OpenGLRenderer() {
+    public OpenGLRenderer(OpenGLWindow window) {
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-    }
+        defaultFramebuffer = new Framebuffer() {
+            @Override
+            public Vector2i getSize() {
+                return window.getFramebufferSize();
+            }
 
-    @Override
-    public void setViewportRect(int x, int y, int width, int height) {
-        glViewport(x, y, width, height);
+            @Override
+            public void close() {
+                throw new UnsupportedOperationException("Cannot close default framebuffer");
+            }
+        };
     }
 
     @Override
@@ -65,10 +71,18 @@ public final class OpenGLRenderer implements Renderer {
     }
 
     @Override
-    public ActivePipeline bindPipeline(PipelineInfo pipeline) {
+    public ActivePipeline bindPipeline(PipelineInfo pipeline, Framebuffer framebuffer) {
         if (pipelineActive)
             throw new IllegalStateException("Another pipeline is already active");
         pipelineActive = true;
+
+        if (framebuffer == defaultFramebuffer) {
+            glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
+        } else {
+            ((OpenGLFramebuffer) framebuffer).bind();
+        }
+        Vector2i size = framebuffer.getSize();
+        glViewport(0, 0, size.x, size.y);
 
         OpenGLShaderProgram shader = (OpenGLShaderProgram) pipeline.getShader();
         shader.bind();
@@ -134,6 +148,16 @@ public final class OpenGLRenderer implements Renderer {
     @Override
     public TextureCubeMap createTextureCubeMap() {
         return new OpenGLTextureCubeMap();
+    }
+
+    @Override
+    public Framebuffer getDefaultFramebuffer() {
+        return defaultFramebuffer;
+    }
+
+    @Override
+    public FramebufferBuilder createFramebufferBuilder(int width, int height) {
+        return new OpenGLFramebufferBuilder(width, height);
     }
 
     private final class ActivePipelineImpl implements ActivePipeline {

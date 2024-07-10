@@ -59,7 +59,6 @@ public abstract class BaseGame extends Game {
         tick(dt);
 
         Vector2i size = window.getFramebufferSize();
-        renderer.setViewportRect(0, 0, size.x, size.y);
         renderer.setClearColor(backgroundColor);
         renderer.clear(BufferType.COLOR, BufferType.DEPTH);
         render(renderer);
