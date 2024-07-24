@@ -25,7 +25,7 @@ public final class OpenGLWindow extends GlfwWindow {
     @Override
     protected void initContext() {
         GL.createCapabilities(true);
-        renderer = new OpenGLRenderer();
+        renderer = new OpenGLRenderer(this);
     }
 
     @Override

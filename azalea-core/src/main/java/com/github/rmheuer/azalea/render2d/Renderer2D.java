@@ -2,6 +2,7 @@ package com.github.rmheuer.azalea.render2d;
 
 import com.github.rmheuer.azalea.io.ResourceUtil;
 import com.github.rmheuer.azalea.render.Colors;
+import com.github.rmheuer.azalea.render.Framebuffer;
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.mesh.Mesh;
 import com.github.rmheuer.azalea.render.mesh.MeshData;
@@ -71,16 +72,12 @@ public final class Renderer2D implements SafeCloseable {
         pipeline.draw(mesh);
     }
 
-    /**
-     * Renders a {@code DrawList2D}.
-     *
-     * @param list
-     * @param transform
-     * @param projection
-     * @param view
-     */
     public void draw(DrawList2D list, Matrix4f transform, Matrix4f projection, Matrix4f view) {
-        try (ActivePipeline pipe = renderer.bindPipeline(new PipelineInfo(shader))) {
+        draw(list, transform, projection, view, renderer.getDefaultFramebuffer());
+    }
+
+    public void draw(DrawList2D list, Matrix4f transform, Matrix4f projection, Matrix4f view, Framebuffer fb) {
+        try (ActivePipeline pipe = renderer.bindPipeline(new PipelineInfo(shader), fb)) {
             pipe.getUniform("u_Transform").setMat4(transform);
             pipe.getUniform("u_Projection").setMat4(projection);
             pipe.getUniform("u_View").setMat4(view);
