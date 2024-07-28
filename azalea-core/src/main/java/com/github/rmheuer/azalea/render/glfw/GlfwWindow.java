@@ -204,6 +204,16 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
     @Override
     public void setCursorCaptured(boolean captured) {
         glfwSetInputMode(handle, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+
+        // For some reason GLFW fires a mouse move event to the center of the
+        // window if the cursor position is initially outside the window, so
+        // prevent that by moving the cursor inside the window. For example,
+        // this prevents a mouse-controlled camera from suddenly jumping on the
+        // first frame.
+        if (captured) {
+            cursorPos = new Vector2d(getSize().div(2));
+            glfwSetCursorPos(handle, cursorPos.x, cursorPos.y);
+        }
     }
 
     /**
