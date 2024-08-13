@@ -1,20 +1,23 @@
 package com.github.rmheuer.azalea.render.opengl;
 
 import com.github.rmheuer.azalea.render.Framebuffer;
+import com.github.rmheuer.azalea.render.texture.Texture2D;
 import org.joml.Vector2i;
+
+import java.util.Map;
 
 import static org.lwjgl.opengl.GL33C.*;
 
 public final class OpenGLFramebuffer implements Framebuffer {
     private final int id;
-    private final int[] texIds;
+    private final Map<Integer, OpenGLTexture2D> colorTextures;
     private final int[] rboIds;
 
     private final int width, height;
 
-    public OpenGLFramebuffer(int id, int[] texIds, int[] rboIds, int width, int height) {
+    public OpenGLFramebuffer(int id, Map<Integer, OpenGLTexture2D> colorTextures, int[] rboIds, int width, int height) {
         this.id = id;
-        this.texIds = texIds;
+        this.colorTextures = colorTextures;
         this.rboIds = rboIds;
         this.width = width;
         this.height = height;
@@ -30,10 +33,16 @@ public final class OpenGLFramebuffer implements Framebuffer {
     }
 
     @Override
+    public Texture2D getColorTexture(int index) {
+        return colorTextures.get(index);
+    }
+
+    @Override
     public void close() {
         glDeleteFramebuffers(id);
-        if (texIds.length > 0)
-            glDeleteTextures(texIds);
+        for (OpenGLTexture2D texture : colorTextures.values()) {
+            texture.close();
+        }
         if (rboIds.length > 0)
             glDeleteRenderbuffers(rboIds);
     }

@@ -6,7 +6,9 @@ import com.github.rmheuer.azalea.render.texture.Texture2D;
 import com.github.rmheuer.azalea.utils.ArrayUtil;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.opengl.GL33C.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -15,14 +17,15 @@ public final class OpenGLFramebufferBuilder implements FramebufferBuilder {
     private final int width, height;
     private final int id;
 
-    private final List<Integer> texIds, rboIds;
+    private final Map<Integer, OpenGLTexture2D> colorTextures;
+    private final List<Integer> rboIds;
 
     public OpenGLFramebufferBuilder(int width, int height) {
         this.width = width;
         this.height = height;
         id = glGenFramebuffers();
 
-        texIds = new ArrayList<>();
+        colorTextures = new HashMap<>();
         rboIds = new ArrayList<>();
     }
 
@@ -31,7 +34,7 @@ public final class OpenGLFramebufferBuilder implements FramebufferBuilder {
     @Override
     public Texture2D addColorTexture(int index) {
         OpenGLTexture2D tex = new OpenGLTexture2D();
-        texIds.add(tex.getId());
+        colorTextures.put(index, tex);
 
         glBindTexture(GL_TEXTURE_2D, tex.getId());
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -70,8 +73,7 @@ public final class OpenGLFramebufferBuilder implements FramebufferBuilder {
             throw new RuntimeException("Framebuffer incomplete");
         }
 
-        int[] tex = ArrayUtil.toArray(texIds);
         int[] rbo = ArrayUtil.toArray(rboIds);
-        return new OpenGLFramebuffer(id, tex, rbo, width, height);
+        return new OpenGLFramebuffer(id, colorTextures, rbo, width, height);
     }
 }
