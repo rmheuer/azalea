@@ -2,7 +2,7 @@ package com.github.rmheuer.azalea.render2d;
 
 import com.github.rmheuer.azalea.io.ResourceUtil;
 import com.github.rmheuer.azalea.render.Colors;
-import com.github.rmheuer.azalea.render.Framebuffer;
+import com.github.rmheuer.azalea.render.framebuffer.Framebuffer;
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.mesh.Mesh;
 import com.github.rmheuer.azalea.render.mesh.MeshData;

@@ -1,7 +1,7 @@
 package com.github.rmheuer.azalea.render.opengl;
 
-import com.github.rmheuer.azalea.render.Framebuffer;
-import com.github.rmheuer.azalea.render.FramebufferBuilder;
+import com.github.rmheuer.azalea.render.framebuffer.Framebuffer;
+import com.github.rmheuer.azalea.render.framebuffer.FramebufferBuilder;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
 import com.github.rmheuer.azalea.utils.ArrayUtil;
 

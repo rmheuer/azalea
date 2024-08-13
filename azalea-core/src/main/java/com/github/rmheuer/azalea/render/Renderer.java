@@ -1,6 +1,8 @@
 package com.github.rmheuer.azalea.render;
 
 import com.github.rmheuer.azalea.io.IOUtil;
+import com.github.rmheuer.azalea.render.framebuffer.Framebuffer;
+import com.github.rmheuer.azalea.render.framebuffer.FramebufferBuilder;
 import com.github.rmheuer.azalea.render.mesh.Mesh;
 import com.github.rmheuer.azalea.render.pipeline.ActivePipeline;
 import com.github.rmheuer.azalea.render.pipeline.PipelineInfo;

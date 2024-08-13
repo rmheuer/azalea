@@ -1,4 +1,4 @@
-package com.github.rmheuer.azalea.render;
+package com.github.rmheuer.azalea.render.framebuffer;
 
 import com.github.rmheuer.azalea.render.texture.Texture2D;
 import com.github.rmheuer.azalea.utils.SafeCloseable;
