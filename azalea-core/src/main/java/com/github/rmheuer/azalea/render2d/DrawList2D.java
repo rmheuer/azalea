@@ -12,6 +12,7 @@ import org.joml.Vector4f;
 
 import java.util.*;
 
+// TODO: Remove clipping
 public class DrawList2D {
     private static final int CURVE_PRECISION = 8;
     private static final float[] curveLookup = new float[CURVE_PRECISION * 2 + 2];
@@ -32,12 +33,15 @@ public class DrawList2D {
     private Rectangle clipRect;
     private PoseStack poseStack;
 
+    private float depth;
+
     public DrawList2D() {
         vertices = new ArrayList<>();
         indices = new ArrayList<>();
         clipStack = new ArrayDeque<>();
         clipRect = null;
         poseStack = new PoseStack();
+        depth = 0;
     }
 
     public void join(DrawList2D other) {
@@ -58,6 +62,10 @@ public class DrawList2D {
 
     List<Integer> getIndices() {
         return indices;
+    }
+
+    public void setDepth(float depth) {
+        this.depth = depth;
     }
 
     public void pushClip(float x, float y, float w, float h) { pushClip(Rectangle.fromXYSizes(x, y, w, h)); }
@@ -95,7 +103,7 @@ public class DrawList2D {
     
     private void vertex(float x, float y, int color) { vertex(x, y, 0, 0, color, null); }
     private void vertex(float x, float y, float u, float v, int tint, Texture2DRegion tex) {
-        Vector3f pos = new Vector3f(x, y, 0);
+        Vector3f pos = new Vector3f(x, y, depth);
         pos = poseStack.getMatrix().transformPosition(pos);
 
         if (tex != null) {
