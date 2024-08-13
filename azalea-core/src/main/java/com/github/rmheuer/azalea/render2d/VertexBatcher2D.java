@@ -20,41 +20,47 @@ final class VertexBatcher2D {
         // This is true for all polygons from a DrawList2D.
 
         List<VertexBatch> batches = new ArrayList<>();
-        VertexBatch currentBatch = new VertexBatch();
-        batches.add(currentBatch);
 
         int vertexCount = vertices.size();
         int indexCount = indices.size();
 
-        // Add vertices
-        int indicesIndex = 0;
-        for (int i = 0; i < vertexCount; i++) {
-            DrawVertex v = vertices.get(i);
+        VertexBatch currentBatch = new VertexBatch();
+        batches.add(currentBatch);
+        int batchStartIdx = 0;
+        int indicesIdx = 0;
+
+        for (int vertexIdx = 0; vertexIdx < vertexCount; vertexIdx++) {
+            // Try to add vertex to current batch
+            DrawVertex v = vertices.get(vertexIdx);
             if (currentBatch.addVertex(v, defaultTexture))
                 continue;
 
-            // If we got here, the current batch has no free texture slots, so we need
-            // to start another one.
+            // Current batch is out of texture slots, start a new one
 
-            // Add the indices before this vertex to the current batch
+            // Flush all indices that reference vertices in the current batch
             List<Integer> batchIndices = new ArrayList<>();
             int index;
-            while ((index = indices.get(indicesIndex)) < i) {
-                batchIndices.add(index);
-                indicesIndex++;
-                if (indicesIndex == indexCount)
-                    break;
+            while ((index = indices.get(indicesIdx)) < vertexIdx) {
+                batchIndices.add(index - batchStartIdx);
+
+                indicesIdx++;
+                if (indicesIdx == indexCount)
+                    throw new IllegalStateException("Ran out of indices while searching for first reference to vertex " + vertexIdx);
             }
             currentBatch.addIndices(batchIndices);
 
-            // Start a new batch
+            // Start new batch
+            batchStartIdx = vertexIdx;
             currentBatch = new VertexBatch();
             batches.add(currentBatch);
+
+            if (!currentBatch.addVertex(v, defaultTexture))
+                throw new IllegalStateException("Could not add first vertex to batch");
         }
 
-        // Add indices
-        for (; indicesIndex < indexCount; indicesIndex++) {
-            currentBatch.addIndex(indices.get(indicesIndex));
+        // Add remaining indices
+        for (; indicesIdx < indexCount; indicesIdx++) {
+            currentBatch.addIndex(indices.get(indicesIdx) - batchStartIdx);
         }
 
         return batches;
