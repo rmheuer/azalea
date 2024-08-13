@@ -17,6 +17,8 @@ import java.io.InputStream;
  * Represents a renderer used to render into a window.
  */
 public interface Renderer {
+    void setClipRect(int x, int y, int w, int h);
+
     /**
      * Sets the color used to fill the window when clearing the color buffer.
      *

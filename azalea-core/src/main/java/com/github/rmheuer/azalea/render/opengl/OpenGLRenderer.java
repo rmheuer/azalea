@@ -23,6 +23,7 @@ public final class OpenGLRenderer implements Renderer {
 
     public OpenGLRenderer(OpenGLWindow window) {
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+        glEnable(GL_SCISSOR_TEST);
         defaultFramebuffer = new Framebuffer() {
             @Override
             public Vector2i getSize() {
@@ -30,10 +31,23 @@ public final class OpenGLRenderer implements Renderer {
             }
 
             @Override
+            public Texture2D getColorTexture(int index) {
+                return null;
+            }
+
+            @Override
             public void close() {
                 throw new UnsupportedOperationException("Cannot close default framebuffer");
             }
         };
+
+        Vector2i size = window.getFramebufferSize();
+        setClipRect(0, 0, size.x, size.y);
+    }
+
+    @Override
+    public void setClipRect(int x, int y, int w, int h) {
+        glScissor(x, y, w, h);
     }
 
     @Override
