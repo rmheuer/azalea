@@ -31,6 +31,8 @@ public final class Renderer2D implements SafeCloseable {
     private final ShaderProgram shader;
     private final Texture2D whiteTex;
 
+    private boolean depthTest;
+
     /**
      * @param renderer renderer to use for rendering
      */
@@ -55,6 +57,8 @@ public final class Renderer2D implements SafeCloseable {
                 pipe.getUniform("u_Textures[" + i + "]").setInt(i);
             }
         }
+
+        depthTest = false;
     }
 
     private void drawBatch(ActivePipeline pipeline, VertexBatch batch) {
@@ -72,15 +76,13 @@ public final class Renderer2D implements SafeCloseable {
         pipeline.draw(mesh);
     }
 
-    public void draw(DrawList2D list, Matrix4f transform, Matrix4f projection, Matrix4f view) {
-        draw(list, transform, projection, view, renderer.getDefaultFramebuffer());
+    public void draw(DrawList2D list, Matrix4f modelViewProj) {
+        draw(list, modelViewProj, renderer.getDefaultFramebuffer());
     }
 
-    public void draw(DrawList2D list, Matrix4f transform, Matrix4f projection, Matrix4f view, Framebuffer fb) {
-        try (ActivePipeline pipe = renderer.bindPipeline(new PipelineInfo(shader), fb)) {
-            pipe.getUniform("u_Transform").setMat4(transform);
-            pipe.getUniform("u_Projection").setMat4(projection);
-            pipe.getUniform("u_View").setMat4(view);
+    public void draw(DrawList2D list, Matrix4f modelViewProj, Framebuffer fb) {
+        try (ActivePipeline pipe = renderer.bindPipeline(new PipelineInfo(shader).setDepthTest(depthTest), fb)) {
+            pipe.getUniform("u_ModelViewProj").setMat4(modelViewProj);
 
             List<VertexBatch> batches =
                     VertexBatcher2D.batch(list.getVertices(), list.getIndices(), whiteTex);
@@ -88,6 +90,10 @@ public final class Renderer2D implements SafeCloseable {
                 drawBatch(pipe, batch);
             }
         }
+    }
+
+    public void setDepthTest(boolean depthTest) {
+        this.depthTest = depthTest;
     }
 
     @Override
