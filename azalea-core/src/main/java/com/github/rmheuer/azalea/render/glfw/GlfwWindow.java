@@ -150,6 +150,9 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
                 bus.dispatchEvent(new MouseButtonReleaseEvent(this, cursorPos, mouseButton));
             }
         });
+        glfwSetScrollCallback(handle, (window, scrollX, scrollY) -> {
+            bus.dispatchEvent(new MouseScrollEvent(this, cursorPos, scrollX, scrollY));
+        });
         glfwSetKeyCallback(handle, (window, key, scancode, action, mods) -> {
             Key k = getKey(key);
             switch (action) {
