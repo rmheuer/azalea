@@ -1,9 +1,7 @@
 package com.github.rmheuer.azalea.imgui;
 
 import com.github.rmheuer.azalea.event.EventBus;
-import com.github.rmheuer.azalea.event.EventHandler;
 import com.github.rmheuer.azalea.event.EventPriority;
-import com.github.rmheuer.azalea.event.Listener;
 import com.github.rmheuer.azalea.input.keyboard.Keyboard;
 import com.github.rmheuer.azalea.input.keyboard.KeyboardEvent;
 import com.github.rmheuer.azalea.input.mouse.MouseEvent;
@@ -20,7 +18,7 @@ import org.lwjgl.opengl.GL33C;
 /**
  * ImGui backend implementation to render ImGui into an engine window.
  */
-public final class ImGuiBackend implements SafeCloseable, Listener {
+public final class ImGuiBackend implements SafeCloseable {
     private final ImGuiImplGlfw implGlfw;
     private final ImGuiImplGl3 implGl3;
     private final Keyboard maskedKeyboard;
@@ -30,7 +28,8 @@ public final class ImGuiBackend implements SafeCloseable, Listener {
      * @param eventBus event bus to receive input events from
      */
     public ImGuiBackend(Window window, EventBus eventBus) {
-        eventBus.registerListener(this);
+        eventBus.addListener(KeyboardEvent.class, EventPriority.FIRST, this::onKeyboardEvent);
+        eventBus.addListener(MouseEvent.class, EventPriority.FIRST, this::onMouseEvent);
 
         implGlfw = new ImGuiImplGlfw();
         implGl3 = new ImGuiImplGl3();
@@ -53,13 +52,11 @@ public final class ImGuiBackend implements SafeCloseable, Listener {
     }
 
     // Cancel input events that ImGui captured
-    @EventHandler(priority = EventPriority.FIRST)
     public void onKeyboardEvent(KeyboardEvent event) {
         if (ImGui.getIO().getWantCaptureKeyboard())
             event.cancel();
     }
 
-    @EventHandler(priority = EventPriority.FIRST)
     public void onMouseEvent(MouseEvent event) {
         if (ImGui.getIO().getWantCaptureMouse())
             event.cancel();

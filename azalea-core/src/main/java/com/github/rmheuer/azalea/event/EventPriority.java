@@ -31,7 +31,6 @@ public enum EventPriority {
      *
      * @return priority level
      */
-    // TODO: Refactor to use declaration order instead of level
     public int getLevel() {
         return level;
     }
