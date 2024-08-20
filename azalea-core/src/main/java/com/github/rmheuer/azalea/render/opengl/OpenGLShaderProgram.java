@@ -64,18 +64,18 @@ public final class OpenGLShaderProgram implements ShaderProgram {
         }
 
         @Override
-        public void setVec2(Vector2fc v) {
-            glUniform2f(location, v.x(), v.y());
+        public void setVec2(float x, float y) {
+            glUniform2f(location, x, y);
         }
 
         @Override
-        public void setVec3(Vector3fc v) {
-            glUniform3f(location, v.x(), v.y(), v.z());
+        public void setVec3(float x, float y, float z) {
+            glUniform3f(location, x, y, z);
         }
 
         @Override
-        public void setVec4(Vector4fc v) {
-            glUniform4f(location, v.x(), v.y(), v.z(), v.w());
+        public void setVec4(float x, float y, float z, float w) {
+            glUniform4f(location, x, y, z, w);
         }
 
         @Override

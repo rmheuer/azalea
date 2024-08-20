@@ -21,23 +21,56 @@ public interface ShaderUniform {
     /**
      * Sets the variable to a {@code vec2} value.
      *
+     * @param x x component of the value to set
+     * @param y y component of the value to set
+     */
+    void setVec2(float x, float y);
+
+    /**
+     * Sets the variable to a {@code vec2} value.
+     *
      * @param v value to set
      */
-    void setVec2(Vector2fc v);
+    default void setVec2(Vector2fc v) {
+        setVec2(v.x(), v.y());
+    }
+
+    /**
+     * Sets the variable to a {@code vec3} value.
+     *
+     * @param x x component of the value to set
+     * @param y y component of the value to set
+     * @param z z component of the value to set
+     */
+    void setVec3(float x, float y, float z);
 
     /**
      * Sets the variable to a {@code vec3} value.
      *
      * @param v value to set
      */
-    void setVec3(Vector3fc v);
+    default void setVec3(Vector3fc v) {
+        setVec3(v.x(), v.y(), v.z());
+    }
+
+    /**
+     * Sets the variable to a {@code vec4} value.
+     *
+     * @param x x component of the value to set
+     * @param y y component of the value to set
+     * @param z z component of the value to set
+     * @param w w component of the value to set
+     */
+    void setVec4(float x, float y, float z, float w);
 
     /**
      * Sets the variable to a {@code vec4} value.
      *
      * @param v value to set
      */
-    void setVec4(Vector4fc v);
+    default void setVec4(Vector4fc v) {
+        setVec4(v.x(), v.y(), v.z(), v.w());
+    }
 
     /**
      * Sets the variable to a {@code mat4} value.
