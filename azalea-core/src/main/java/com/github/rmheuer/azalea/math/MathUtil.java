@@ -100,6 +100,10 @@ public final class MathUtil {
         return v * v;
     }
 
+    public static int ceilDiv(int i, int divisor) {
+	return (i - 1) / divisor + 1;
+    }
+
     private MathUtil() {
         throw new AssertionError();
     }
