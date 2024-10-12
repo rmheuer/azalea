@@ -4,6 +4,7 @@ import com.github.rmheuer.azalea.render.shader.ShaderProgram;
 
 public final class PipelineInfo {
     private final ShaderProgram shader;
+    private boolean clip;
     private boolean blend;
     private boolean depthTest;
     private DepthFunc depthFunc;
@@ -13,12 +14,18 @@ public final class PipelineInfo {
 
     public PipelineInfo(ShaderProgram shader) {
         this.shader = shader;
+        clip = false;
         blend = true;
         depthTest = false;
         depthFunc = DepthFunc.LESS_OR_EQUAL;
         cullMode = CullMode.OFF;
         winding = FaceWinding.CW_FRONT;
         fillMode = FillMode.FILLED;
+    }
+
+    public PipelineInfo setClip(boolean clip) {
+        this.clip = clip;
+        return this;
     }
 
     public PipelineInfo setBlend(boolean blend) {
@@ -52,6 +59,10 @@ public final class PipelineInfo {
 
     public ShaderProgram getShader() {
         return shader;
+    }
+
+    public boolean isClip() {
+        return clip;
     }
 
     public boolean isBlend() {

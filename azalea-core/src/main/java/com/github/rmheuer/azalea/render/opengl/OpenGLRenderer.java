@@ -25,7 +25,6 @@ public final class OpenGLRenderer implements Renderer {
 
     public OpenGLRenderer(OpenGLWindow window) {
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-        glEnable(GL_SCISSOR_TEST);
         defaultFramebuffer = new Framebuffer() {
             @Override
             public Vector2i getSize() {
@@ -106,6 +105,8 @@ public final class OpenGLRenderer implements Renderer {
         setEnabled(GL_BLEND, pipeline.isBlend());
         if (pipeline.isBlend())
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        setEnabled(GL_SCISSOR_TEST, pipeline.isClip());
 
         boolean depthTest = pipeline.isDepthTest();
         if (depthTest) {
