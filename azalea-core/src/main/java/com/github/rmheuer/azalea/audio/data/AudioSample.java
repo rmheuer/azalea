@@ -1,6 +1,7 @@
 package com.github.rmheuer.azalea.audio.data;
 
 import com.github.rmheuer.azalea.io.IOUtil;
+import com.github.rmheuer.azalea.utils.SizeOf;
 import org.lwjgl.stb.STBVorbisInfo;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -15,14 +16,13 @@ import static org.lwjgl.openal.AL10.*;
 import static org.lwjgl.stb.STBVorbis.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-//
-
 /**
  * An audio sample, loaded fully into memory. This should be used for relatively
  * short samples so you don't have as much data loaded into memory.
  */
 public final class AudioSample implements AudioData {
     private final int buffer;
+    private final long sizeInBytes;
 
     /**
      * Internal use only
@@ -48,8 +48,9 @@ public final class AudioSample implements AudioData {
 
             ShortBuffer pcm = MemoryUtil.memAllocShort(samples * channels);
             pcm.limit(stb_vorbis_get_samples_short_interleaved(vb, channels, pcm) * channels);
+	    stb_vorbis_close(vb);
 
-            stb_vorbis_close(vb);
+	    sizeInBytes = pcm.limit() * SizeOf.SHORT;
 
             buffer = alGenBuffers();
             alBufferData(buffer, channels == 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16, pcm, info.sample_rate());
@@ -66,6 +67,14 @@ public final class AudioSample implements AudioData {
      */
     public int getBuffer() {
         return buffer;
+    }
+
+    /**
+     * Gets the size of the audio data stored in this buffer in bytes.
+     * This data is stored off-heap in native memory.
+     */
+    public long getSizeInBytes() {
+	return sizeInBytes;
     }
 
     @Override
