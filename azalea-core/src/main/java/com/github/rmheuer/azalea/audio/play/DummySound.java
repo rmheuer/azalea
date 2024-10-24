@@ -7,7 +7,9 @@ import org.joml.Vector3fc;
  * any sound and is finished immediately.
  */
 public final class DummySound extends PlayingSound {
-    public DummySound() {
+    public static final DummySound INSTANCE = new DummySound();
+
+    private DummySound() {
         super(-1);
     }
 

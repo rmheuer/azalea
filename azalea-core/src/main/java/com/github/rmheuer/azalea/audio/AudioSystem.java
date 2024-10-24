@@ -106,7 +106,7 @@ public final class AudioSystem implements AutoCloseable {
     public PlayingSound play(PlayOptions options) {
         int source = getSource();
         if (source == -1)
-            return new DummySound();
+            return DummySound.INSTANCE;
 
         Vector3fc pos = options.getPosition();
         alSourcei(source, AL_SOURCE_RELATIVE, options.getMode() == SpatialMode.RELATIVE ? AL_TRUE : AL_FALSE);
