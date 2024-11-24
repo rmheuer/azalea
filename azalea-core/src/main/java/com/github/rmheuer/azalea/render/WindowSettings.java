@@ -9,6 +9,7 @@ public final class WindowSettings {
     private final String title;
     private boolean resizable;
     private boolean fullScreen;
+    private boolean vSync;
 
     /**
      * @param width desired width of the window in screen coordinates
@@ -21,6 +22,7 @@ public final class WindowSettings {
         this.title = title;
         resizable = true;
         fullScreen = false;
+        vSync = true;
     }
 
     /**
@@ -42,6 +44,18 @@ public final class WindowSettings {
      */
     public WindowSettings setFullScreen(boolean fullScreen) {
         this.fullScreen = fullScreen;
+        return this;
+    }
+
+    /**
+     * Sets whether VSync should be enabled for the window. This avoids screen
+     * tearing by limiting the frame rate to the display's refresh rate.
+     *
+     * @param vSync whether to enable VSync
+     * @return this
+     */
+    public WindowSettings setVSync(boolean vSync) {
+        this.vSync = vSync;
         return this;
     }
 
@@ -90,6 +104,15 @@ public final class WindowSettings {
         return fullScreen;
     }
 
+    /**
+     * Gets whether VSync should be enabled.
+     *
+     * @return VSync
+     */
+    public boolean isVSync() {
+        return vSync;
+    }
+
     @Override
     public String toString() {
         return "WindowSettings{" +
@@ -98,6 +121,7 @@ public final class WindowSettings {
                 ", title='" + title + '\'' +
                 ", resizable=" + resizable +
                 ", fullScreen=" + fullScreen +
+                ", vSync=" + vSync +
                 '}';
     }
 }

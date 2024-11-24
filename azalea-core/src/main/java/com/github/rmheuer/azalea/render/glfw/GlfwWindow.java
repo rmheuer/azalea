@@ -60,7 +60,7 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
         }
 
         glfwMakeContextCurrent(handle);
-        initContext();
+        initContext(settings.isVSync());
 
         glfwShowWindow(handle);
         glfwFocusWindow(handle);
@@ -78,7 +78,7 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
     /**
      * Initializes the graphics context in the newly created window.
      */
-    protected abstract void initContext();
+    protected abstract void initContext(boolean vSync);
 
     @Override
     public boolean shouldClose() {

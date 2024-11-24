@@ -23,7 +23,9 @@ public final class OpenGLWindow extends GlfwWindow {
     }
 
     @Override
-    protected void initContext() {
+    protected void initContext(boolean vSync) {
+        glfwSwapInterval(vSync ? 1 : 0);
+	
         GL.createCapabilities(true);
         renderer = new OpenGLRenderer(this);
     }
