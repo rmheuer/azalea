@@ -1,7 +1,5 @@
 package com.github.rmheuer.azalea.runtime;
 
-import java.util.function.Supplier;
-
 /**
  * Base class for a game.
  */
@@ -20,22 +18,7 @@ public abstract class Game {
      */
     protected abstract void close();
 
-    /**
-     * The entry point for the engine. This should be the only thing in the
-     * main method.
-     *
-     * @param args command-line arguments provided to the game
-     * @param gameConstructor constructor for the game instance
-     */
-    public static void launch(String[] args, Supplier<Game> gameConstructor) {
-        if (EngineRuntime.restartForMacOS(args))
-            return;
-
-        Game game = gameConstructor.get();
-        game.run();
-    }
-
-    private void run() {
+    public void run() {
         running = true;
         long prevTime = System.nanoTime();
         while (running) {
