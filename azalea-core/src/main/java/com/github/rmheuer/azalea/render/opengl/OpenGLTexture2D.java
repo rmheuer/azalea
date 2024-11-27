@@ -3,6 +3,8 @@ package com.github.rmheuer.azalea.render.opengl;
 import com.github.rmheuer.azalea.render.texture.BitmapRegion;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
 
+import java.nio.ByteBuffer;
+
 import static org.lwjgl.opengl.GL33C.*;
 
 public final class OpenGLTexture2D extends OpenGLTexture implements Texture2D {
@@ -29,6 +31,12 @@ public final class OpenGLTexture2D extends OpenGLTexture implements Texture2D {
     public void setSubData(BitmapRegion data, int x, int y) {
         glBindTexture(GL_TEXTURE_2D, id);
         setSubData(GL_TEXTURE_2D, data, x, y);
+    }
+
+    @Override
+    public void setSize(int width, int height) {
+        glBindTexture(GL_TEXTURE_2D, id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
     }
 
     @Override

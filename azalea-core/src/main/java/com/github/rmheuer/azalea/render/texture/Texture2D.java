@@ -22,6 +22,15 @@ public interface Texture2D extends Texture, Texture2DRegion {
      */
     void setSubData(BitmapRegion data, int x, int y);
 
+    /**
+     * Allocates GPU memory for the specified texture size, without uploading
+     * pixel data. Any previous texture data will be discarded.
+     *
+     * @param width width of the allocated texture data
+     * @param height height of the allocated texture data
+     */
+    void setSize(int width, int height);
+
     @Override
     default Texture2D getSourceTexture() {
         return this;
