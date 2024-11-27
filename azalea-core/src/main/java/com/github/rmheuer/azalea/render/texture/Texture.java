@@ -39,4 +39,13 @@ public interface Texture extends SafeCloseable {
         setMinFilter(filter);
         setMagFilter(filter);
     }
+
+    /**
+     * Sets the mapping from channels in the texture data to the channels that
+     * are rendered. If this is not called, {@link ChannelMapping#DIRECT_RGBA}
+     * will be used.
+     *
+     * @param mapping mapping from bitmap channels to texture channels
+     */
+    void setChannelMapping(ChannelMapping mapping);
 }
