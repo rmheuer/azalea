@@ -3,6 +3,7 @@ package com.github.rmheuer.azalea.render2d.font;
 import com.github.rmheuer.azalea.io.IOUtil;
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.texture.Bitmap;
+import com.github.rmheuer.azalea.render.texture.ChannelMapping;
 import com.github.rmheuer.azalea.render.texture.Texture;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
 import org.joml.Vector2f;
@@ -83,15 +84,18 @@ public final class TrueTypeFont extends Font {
             stbtt_PackEnd(pc);
 
             // Convert bitmap data to RGBA
-            int[] pixels = new int[pixelCount];
-            for (int i = 0; i < pixelCount; i++) {
-                pixels[i] = ((bitmap.get(i) << 24) | 0x00FFFFFF);
-            }
+//            int[] pixels = new int[pixelCount];
+//            for (int i = 0; i < pixelCount; i++) {
+//                pixels[i] = ((bitmap.get(i) << 24) | 0x00FFFFFF);
+//            }
+//            MemoryUtil.memFree(bitmap);
+            byte[] pixels = new byte[pixelCount];
+            bitmap.get(pixels);
             MemoryUtil.memFree(bitmap);
 
-            Bitmap atlasBmp = new Bitmap(bitmapWidth, bitmapHeight, pixels);
+            Bitmap atlasBmp = Bitmap.fromGrayscale(bitmapWidth, bitmapHeight, pixels);
             atlas = renderer.createTexture2D();
-            atlas.setData(atlasBmp);
+            atlas.setData(atlasBmp, new ChannelMapping(ChannelMapping.Source.GRAY, ChannelMapping.Source.ZERO, ChannelMapping.Source.ONE, ChannelMapping.Source.GRAY));
             atlas.setMinFilter(Texture.Filter.NEAREST);
             atlas.setMagFilter(Texture.Filter.NEAREST);
 //            atlas.setMinFilter(Texture.Filter.LINEAR);

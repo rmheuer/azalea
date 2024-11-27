@@ -8,19 +8,26 @@ import org.joml.Vector2i;
  */
 public interface BitmapRegion {
     /**
-     * Gets the RGBA color of a pixel.
+     * Gets the format in which the colors in this bitmap are encoded.
+     *
+     * @return format of color values
+     */
+    ColorFormat getColorFormat();
+
+    /**
+     * Gets the color of a pixel.
      *
      * @param x x coordinate of the pixel
      * @param y y coordinate of the pixel
-     * @return RGBA color of the pixel
+     * @return color of the pixel
      */
     int getPixel(int x, int y);
 
     /**
-     * Gets the RGBA color of a pixel.
+     * Gets the color of a pixel.
      *
      * @param pos coordinates of the pixel
-     * @return RGBA color of the pixel
+     * @return color of the pixel
      */
     default int getPixel(Vector2i pos) {
         return getPixel(pos.x, pos.y);
@@ -31,19 +38,26 @@ public interface BitmapRegion {
      *
      * @param x x coordinate of the pixel
      * @param y y coordinate of the pixel
-     * @param colorRGBA new color for the pixel
+     * @param color new color for the pixel
      */
-    void setPixel(int x, int y, int colorRGBA);
+    void setPixel(int x, int y, int color);
 
     /**
      * Sets the color of a pixel.
      *
      * @param pos coordinates of the pixel
-     * @param colorRGBA new color for the pixel
+     * @param color new color for the pixel
      */
-    default void setPixel(Vector2i pos, int colorRGBA) {
-        setPixel(pos.x, pos.y, colorRGBA);
+    default void setPixel(Vector2i pos, int color) {
+        setPixel(pos.x, pos.y, color);
     }
+
+    /**
+     * Sets all pixels within this region to a new color.
+     *
+     * @param color color to fill with
+     */
+    void fill(int color);
 
     /**
      * Copies the contents of another {@code BitmapRegion} into this bitmap.
@@ -83,7 +97,14 @@ public interface BitmapRegion {
      *
      * @return rgba data
      */
-    int[] getRgbaData();
+    int[] getDataRGBA();
+
+    /**
+     * Gets the grayscale data of this region.
+     *
+     * @return grayscale data
+     */
+    byte[] getDataGrayscale();
 
     /**
      * Gets the {@code Bitmap} the actual image data is stored in.

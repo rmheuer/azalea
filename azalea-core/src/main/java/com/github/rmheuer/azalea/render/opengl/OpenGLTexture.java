@@ -2,6 +2,9 @@ package com.github.rmheuer.azalea.render.opengl;
 
 import com.github.rmheuer.azalea.render.texture.BitmapRegion;
 import com.github.rmheuer.azalea.render.texture.Texture;
+import org.lwjgl.system.MemoryUtil;
+
+import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL33C.*;
 
@@ -15,11 +18,26 @@ public abstract class OpenGLTexture implements Texture {
     protected abstract void bindToTarget();
 
     protected void setData(int target, BitmapRegion data) {
-        glTexImage2D(target, 0, GL_RGBA, data.getWidth(), data.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data.getRgbaData());
+        switch (data.getColorFormat()) {
+            case RGBA:
+                glTexImage2D(target, 0, GL_RGBA, data.getWidth(), data.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data.getDataRGBA());
+                break;
+            case GRAYSCALE: {
+                byte[] gray = data.getDataGrayscale();
+                ByteBuffer buf = MemoryUtil.memAlloc(gray.length);
+                buf.put(gray);
+                buf.flip();
+
+                glTexImage2D(target, 0, GL_RED, data.getWidth(), data.getHeight(), 0, GL_RED, GL_UNSIGNED_BYTE, buf);
+
+                MemoryUtil.memFree(buf);
+                break;
+            }
+        }
     }
 
     protected void setSubData(int target, BitmapRegion data, int x, int y) {
-        glTexSubImage2D(target, 0, x, y, data.getWidth(), data.getHeight(), GL_RGBA, GL_UNSIGNED_BYTE, data.getRgbaData());
+        glTexSubImage2D(target, 0, x, y, data.getWidth(), data.getHeight(), GL_RGBA, GL_UNSIGNED_BYTE, data.getDataRGBA());
     }
 
     protected int glFilter(Filter filter) {

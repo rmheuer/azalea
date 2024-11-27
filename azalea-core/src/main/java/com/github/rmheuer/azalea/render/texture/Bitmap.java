@@ -1,7 +1,6 @@
 package com.github.rmheuer.azalea.render.texture;
 
 import com.github.rmheuer.azalea.io.IOUtil;
-import com.github.rmheuer.azalea.render.Colors;
 import com.github.rmheuer.azalea.utils.SizeOf;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -18,11 +17,10 @@ import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 /** A 2D RGBA texture stored with CPU access. */
 public final class Bitmap implements BitmapRegion {
     /**
-     * Reads and decodes a bitmap from an {@code InputStream}. This will take
-     * ownership of the stream.
+     * Reads and decodes a bitmap from an {@code InputStream}.
      *
-     * @param in input stream to read from
-     * @return decoded bitmap
+     * @param in input stream to read from, will be closed
+     * @return decoded bitmap, RGBA format
      * @throws IOException if an IO error occurs
      */
     public static Bitmap decode(InputStream in) throws IOException {
@@ -54,35 +52,8 @@ public final class Bitmap implements BitmapRegion {
             stbi_image_free(pixels);
             MemoryUtil.memFree(data);
 
-            return new Bitmap(width, height, rgbaData);
+            return fromRGBA(width, height, rgbaData);
         }
-    }
-
-    private final int width;
-    private final int height;
-    private final int[] rgbaData;
-
-    /**
-     * Creates a new empty bitmap with the specified size, filled with white.
-     *
-     * @param width width to create in pixels
-     * @param height height to create in pixels
-     */
-    public Bitmap(int width, int height) {
-        this(width, height, Colors.RGBA.WHITE);
-    }
-
-    /**
-     * Creates a new bitmap with the specified size, filled with the specified
-     * color.
-     *
-     * @param width width to create in pixels
-     * @param height height to create in pixels
-     * @param fillColorRGBA color to fill with
-     */
-    public Bitmap(int width, int height, int fillColorRGBA) {
-        this(width, height, new int[width * height]);
-        Arrays.fill(rgbaData, fillColorRGBA);
     }
 
     /**
@@ -92,13 +63,71 @@ public final class Bitmap implements BitmapRegion {
      * @param height height in pixels
      * @param rgbaData packed RGBA data, should have length {@code width*height}.
      */
-    public Bitmap(int width, int height, int[] rgbaData) {
+    public static Bitmap fromRGBA(int width, int height, int[] rgbaData) {
         if (rgbaData.length != width * height)
             throw new IllegalArgumentException("RGBA data is wrong size");
 
+        return new Bitmap(width, height, ColorFormat.RGBA, rgbaData);
+    }
+
+    /**
+     * Creates a new bitmap with provided grayscale data.
+     *
+     * @param width width in pixels
+     * @param height height in pixels
+     * @param grayData packed grayscale data, should have length {@code width*height}.
+     */
+    public static Bitmap fromGrayscale(int width, int height, byte[] grayData) {
+        if (grayData.length != width * height)
+            throw new IllegalArgumentException("RGBA data is wrong size");
+
+        return new Bitmap(width, height, ColorFormat.GRAYSCALE, grayData);
+    }
+
+    private static Object createDataArray(int width, int height, ColorFormat format) {
+        switch (format) {
+            case RGBA: return new int[width * height];
+            case GRAYSCALE: return new byte[width * height];
+            default:
+                throw new IllegalArgumentException("Unknown format: " + format);
+        }
+    }
+
+    private final int width;
+    private final int height;
+    private final ColorFormat colorFormat;
+    private final Object colorData;
+
+    /**
+     * Creates a new bitmap with the specified size, filled with the specified
+     * color.
+     *
+     * @param width width to create in pixels
+     * @param height height to create in pixels
+     * @param colorFormat format to store colors with
+     * @param fillColor color to fill with
+     */
+    public Bitmap(int width, int height, ColorFormat colorFormat, int fillColor) {
+        this(width, height, colorFormat);
+        fill(fillColor);
+    }
+
+    /**
+     * Creates a new empty bitmap with the specified size.
+     *
+     * @param width width to create in pixels
+     * @param height height to create in pixels
+     * @param colorFormat format to store colors with
+     */
+    public Bitmap(int width, int height, ColorFormat colorFormat) {
+        this(width, height, colorFormat, createDataArray(width, height, colorFormat));
+    }
+
+    private Bitmap(int width, int height, ColorFormat colorFormat, Object colorData) {
         this.width = width;
         this.height = height;
-        this.rgbaData = rgbaData;
+        this.colorFormat = colorFormat;
+        this.colorData = colorData;
     }
 
     private int pixelIdx(int x, int y) {
@@ -108,13 +137,45 @@ public final class Bitmap implements BitmapRegion {
     @Override
     public int getPixel(int x, int y) {
         checkBounds(x, y);
-        return rgbaData[pixelIdx(x, y)];
+
+        int i = pixelIdx(x, y);
+        switch (colorFormat) {
+            case RGBA:
+                return ((int[]) colorData)[i];
+            case GRAYSCALE:
+                return ((byte[]) colorData)[i];
+            default:
+                throw new AssertionError();
+        }
     }
 
     @Override
-    public void setPixel(int x, int y, int colorRGBA) {
+    public void setPixel(int x, int y, int color) {
         checkBounds(x, y);
-        rgbaData[pixelIdx(x, y)] = colorRGBA;
+
+        int i = pixelIdx(x, y);
+        switch (colorFormat) {
+            case RGBA:
+                ((int[]) colorData)[i] = color;
+                break;
+            case GRAYSCALE:
+                ((byte[]) colorData)[i] = (byte) color;
+                break;
+            default:
+                throw new AssertionError();
+        }
+    }
+
+    @Override
+    public void fill(int color) {
+        switch (colorFormat) {
+            case RGBA:
+                Arrays.fill((int[]) colorData, color);
+                break;
+            case GRAYSCALE:
+                Arrays.fill((byte[]) colorData, (byte) color);
+                break;
+        }
     }
 
     @Override
@@ -134,7 +195,7 @@ public final class Bitmap implements BitmapRegion {
             int srcY = row + imgYInSrc;
             int dstY = y + row;
 
-            System.arraycopy(src.rgbaData, src.pixelIdx(imgXInSrc, srcY), rgbaData, pixelIdx(x, dstY), imgW);
+            System.arraycopy(src.colorData, src.pixelIdx(imgXInSrc, srcY), colorData, pixelIdx(x, dstY), imgW);
         }
     }
 
@@ -142,6 +203,11 @@ public final class Bitmap implements BitmapRegion {
         if (x < 0 || x >= width || y < 0 || y >= height) {
             throw new IndexOutOfBoundsException(x + ", " + y);
         }
+    }
+
+    @Override
+    public ColorFormat getColorFormat() {
+        return colorFormat;
     }
 
     @Override
@@ -155,8 +221,13 @@ public final class Bitmap implements BitmapRegion {
     }
 
     @Override
-    public int[] getRgbaData() {
-        return rgbaData;
+    public int[] getDataRGBA() {
+        return (int[]) colorData;
+    }
+
+    @Override
+    public byte[] getDataGrayscale() {
+        return (byte[]) colorData;
     }
 
     @Override

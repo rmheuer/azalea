@@ -1,5 +1,7 @@
 package com.github.rmheuer.azalea.render.texture;
 
+import java.util.Arrays;
+
 final class SubBitmap implements BitmapRegion {
     private final Bitmap srcBitmap;
     private final int x, y, width, height;
@@ -19,6 +21,11 @@ final class SubBitmap implements BitmapRegion {
     }
 
     @Override
+    public ColorFormat getColorFormat() {
+        return srcBitmap.getColorFormat();
+    }
+
+    @Override
     public int getPixel(int x, int y) {
         checkBounds(x, y);
         return srcBitmap.getPixel(this.x + x, this.y + y);
@@ -28,6 +35,21 @@ final class SubBitmap implements BitmapRegion {
     public void setPixel(int x, int y, int colorRGBA) {
         checkBounds(x, y);
         srcBitmap.setPixel(this.x + x, this.y + y, colorRGBA);
+    }
+
+    @Override
+    public void fill(int color) {
+        if (srcBitmap.getColorFormat() == ColorFormat.RGBA) {
+            int[] rgba = srcBitmap.getDataRGBA();
+            for (int y = 0; y < height; y++) {
+                Arrays.fill(rgba, this.x, this.x + width, color);
+            }
+        } else {
+            byte[] gray = srcBitmap.getDataGrayscale();
+            for (int y = 0; y < height; y++) {
+                Arrays.fill(gray, this.x, this.x + width, (byte) color);
+            }
+        }
     }
 
     @Override
@@ -49,9 +71,19 @@ final class SubBitmap implements BitmapRegion {
     }
 
     @Override
-    public int[] getRgbaData() {
+    public int[] getDataRGBA() {
+        int[] srcData = srcBitmap.getDataRGBA();
         int[] data = new int[width * height];
-        int[] srcData = srcBitmap.getRgbaData();
+        for (int y = 0; y < height; y++) {
+            System.arraycopy(srcData, this.x + (this.y + y) * srcBitmap.getWidth(), data, y * width, width);
+        }
+        return data;
+    }
+
+    @Override
+    public byte[] getDataGrayscale() {
+        byte[] srcData = srcBitmap.getDataGrayscale();
+        byte[] data = new byte[width * height];
         for (int y = 0; y < height; y++) {
             System.arraycopy(srcData, this.x + (this.y + y) * srcBitmap.getWidth(), data, y * width, width);
         }
