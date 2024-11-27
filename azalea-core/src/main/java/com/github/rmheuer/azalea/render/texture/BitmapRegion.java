@@ -119,6 +119,10 @@ public interface BitmapRegion {
         if (x < 0 || y < 0 || x + w > getWidth() || y + h > getHeight())
             throw new IndexOutOfBoundsException(x + ", " + y + " size: " + w + "x" + h);
 
-        return new SubBitmap(getSourceBitmap(), x, y, w, h);
+        return new SubBitmap(
+                getSourceBitmap(),
+                getSourceOffsetX() + x, getSourceOffsetY() + y,
+                w, h
+        );
     }
 }
