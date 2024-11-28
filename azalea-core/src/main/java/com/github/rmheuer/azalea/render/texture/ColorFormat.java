@@ -5,7 +5,8 @@ import org.lwjgl.system.MemoryUtil;
 public enum ColorFormat {
     /**
      * 8-bit red, green, blue, alpha components. Each color value is stored as
-     * an {@code int}.
+     * an {@code int}. These color values can be manipulated using
+     * {@link com.github.rmheuer.azalea.render.Colors.RGBA}.
      */
     RGBA {
         @Override
@@ -35,9 +36,11 @@ public enum ColorFormat {
             }
         }
     },
+
     /**
      * 8-bit grayscale (one component), stored as the red component. Each color
-     * value is stored as a {@code byte}.
+     * value is stored as a {@code byte}. The value ranges from 0 (black) to
+     * 255 (white).
      */
     GRAYSCALE {
         @Override
@@ -67,9 +70,30 @@ public enum ColorFormat {
      */
     public abstract int getByteCount();
 
+    /**
+     * Gets the color of a pixel from a native data buffer.
+     *
+     * @param dataPtr pointer to the data buffer
+     * @param pixelIdx index of the pixel
+     * @return color of the pixel
+     */
     public abstract int getPixel(long dataPtr, int pixelIdx);
 
+    /**
+     * Sets the color of a pixel in a native data buffer.
+     *
+     * @param dataPtr pointer to the data buffer
+     * @param pixelIdx index of the pixel
+     * @param color color to set the pixel
+     */
     public abstract void setPixel(long dataPtr, int pixelIdx, int color);
 
+    /**
+     * Fills a native data buffer with a specified color.
+     *
+     * @param dataPtr pointer to the data buffer
+     * @param pixelCount number of pixels to fill
+     * @param color color to fill the buffer with
+     */
     public abstract void fillBuffer(long dataPtr, int pixelCount, int color);
 }

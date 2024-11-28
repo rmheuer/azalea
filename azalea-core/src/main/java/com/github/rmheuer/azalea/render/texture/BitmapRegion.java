@@ -2,6 +2,9 @@ package com.github.rmheuer.azalea.render.texture;
 
 import org.joml.Vector2i;
 
+/**
+ * Represents a section of a {@link Bitmap}.
+ */
 public interface BitmapRegion {
     /**
      * Gets the format in which the colors in this bitmap are encoded.

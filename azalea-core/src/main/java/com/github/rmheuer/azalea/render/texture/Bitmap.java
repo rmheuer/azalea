@@ -12,7 +12,19 @@ import java.nio.IntBuffer;
 import static org.lwjgl.stb.STBImage.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
+/**
+ * A 2D image accessible from the CPU.
+ */
 public final class Bitmap implements BitmapRegion, SafeCloseable {
+    /**
+     * Decodes an image file, reading from an {@code InputStream}. This
+     * supports all image formats supported by
+     * <a href="https://github.com/nothings/stb/blob/master/stb_image.h">stb_image</a>.
+     *
+     * @param in stream to read image file from
+     * @return decoded image data
+     * @throws IOException if reading or decoding the image fails
+     */
     public static Bitmap decode(InputStream in) throws IOException {
         ByteBuffer data = IOUtil.readToByteBuffer(in);
 
@@ -40,7 +52,20 @@ public final class Bitmap implements BitmapRegion, SafeCloseable {
         }
     }
 
-
+    /**
+     * Creates a new Bitmap from provided pixel data. The data should be
+     * allocated using {@link org.lwjgl.system.MemoryUtil#memAlloc}. The data
+     * will be owned by the returned {@code Bitmap}, so it should not be freed.
+     * The data must contain at least
+     * {@code width * height * colorFormat.getByteCount()} bytes.
+     *
+     * @param width width of the image
+     * @param height height of the image
+     * @param colorFormat format of the pixels within the image
+     * @param pixelData pixel data of the image
+     * @return bitmap containing the image
+     * @throws IllegalArgumentException if the provided data is not long enough
+     */
     public static Bitmap fromPixelData(int width, int height, ColorFormat colorFormat, ByteBuffer pixelData) {
         Bitmap bitmap = new Bitmap(width, height, colorFormat, memAddress(pixelData), false);
         if (pixelData.remaining() < bitmap.dataLen)
@@ -57,12 +82,28 @@ public final class Bitmap implements BitmapRegion, SafeCloseable {
     private final int dataLen;
     private final boolean useStbFree;
 
-    public Bitmap(int width, int height, ColorFormat format) {
-        this(width, height, format, nmemAlloc(width * height * format.getByteCount()), false);
+    /**
+     * Creates a new Bitmap with the specified size and format. The pixel data
+     * contained in the image is undefined, so it may contain garbage data.
+     *
+     * @param width width of the image
+     * @param height height of the image
+     * @param colorFormat format to store colors in
+     */
+    public Bitmap(int width, int height, ColorFormat colorFormat) {
+        this(width, height, colorFormat, nmemAlloc(width * height * colorFormat.getByteCount()), false);
     }
 
-    public Bitmap(int width, int height, ColorFormat format, int fillColor) {
-        this(width, height, format);
+    /**
+     * Creates a new Bitmap filled with the specified color.
+     *
+     * @param width width of the image
+     * @param height height of the image
+     * @param colorFormat format to store colors in
+     * @param fillColor color to fill the image with
+     */
+    public Bitmap(int width, int height, ColorFormat colorFormat, int fillColor) {
+        this(width, height, colorFormat);
         fill(fillColor);
     }
 
