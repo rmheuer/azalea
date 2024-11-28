@@ -1,28 +1,18 @@
 package com.github.rmheuer.azalea.render.texture;
 
 import com.github.rmheuer.azalea.io.IOUtil;
-import com.github.rmheuer.azalea.utils.SizeOf;
+import com.github.rmheuer.azalea.utils.SafeCloseable;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.Arrays;
 
-import static org.lwjgl.stb.STBImage.stbi_image_free;
-import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
+import static org.lwjgl.stb.STBImage.*;
+import static org.lwjgl.system.MemoryUtil.*;
 
-/** A 2D RGBA texture stored with CPU access. */
-public final class Bitmap implements BitmapRegion {
-    /**
-     * Reads and decodes a bitmap from an {@code InputStream}.
-     *
-     * @param in input stream to read from, will be closed
-     * @return decoded bitmap, RGBA format
-     * @throws IOException if an IO error occurs
-     */
+public final class Bitmap implements BitmapRegion, SafeCloseable {
     public static Bitmap decode(InputStream in) throws IOException {
         ByteBuffer data = IOUtil.readToByteBuffer(in);
 
@@ -31,103 +21,58 @@ public final class Bitmap implements BitmapRegion {
             IntBuffer pHeight = stack.mallocInt(1);
             IntBuffer pChannels = stack.mallocInt(1);
 
-            ByteBuffer pixels = stbi_load_from_memory(
-                    data,
-                    pWidth,
-                    pHeight,
-                    pChannels,
+            long pixelsPtr = nstbi_load_from_memory(
+                    memAddress(data), data.remaining(),
+                    memAddress(pWidth),
+                    memAddress(pHeight),
+                    memAddress(pChannels),
                     4
             );
-            if (pixels == null) {
-                throw new IOException("Failed to decode image");
+            if (pixelsPtr == NULL) {
+                throw new IOException("Failed to decode image: " + stbi_failure_reason());
             }
+
+            memFree(data);
 
             int width = pWidth.get(0);
             int height = pHeight.get(0);
-
-            int[] rgbaData = new int[width * height];
-            for (int i = 0; i < rgbaData.length; i++) {
-                rgbaData[i] = pixels.getInt(i * SizeOf.INT);
-            }
-            stbi_image_free(pixels);
-            MemoryUtil.memFree(data);
-
-            return fromRGBA(width, height, rgbaData);
+            return new Bitmap(width, height, ColorFormat.RGBA, pixelsPtr, true);
         }
     }
 
-    /**
-     * Creates a new bitmap with provided RGBA data.
-     *
-     * @param width width in pixels
-     * @param height height in pixels
-     * @param rgbaData packed RGBA data, should have length {@code width*height}.
-     */
-    public static Bitmap fromRGBA(int width, int height, int[] rgbaData) {
-        if (rgbaData.length != width * height)
-            throw new IllegalArgumentException("RGBA data is wrong size");
 
-        return new Bitmap(width, height, ColorFormat.RGBA, rgbaData);
-    }
+    public static Bitmap fromPixelData(int width, int height, ColorFormat colorFormat, ByteBuffer pixelData) {
+        Bitmap bitmap = new Bitmap(width, height, colorFormat, memAddress(pixelData), false);
+        if (pixelData.remaining() < bitmap.dataLen)
+            throw new IllegalArgumentException("Not enough image data provided");
 
-    /**
-     * Creates a new bitmap with provided grayscale data.
-     *
-     * @param width width in pixels
-     * @param height height in pixels
-     * @param grayData packed grayscale data, should have length {@code width*height}.
-     */
-    public static Bitmap fromGrayscale(int width, int height, byte[] grayData) {
-        if (grayData.length != width * height)
-            throw new IllegalArgumentException("RGBA data is wrong size");
-
-        return new Bitmap(width, height, ColorFormat.GRAYSCALE, grayData);
-    }
-
-    private static Object createDataArray(int width, int height, ColorFormat format) {
-        switch (format) {
-            case RGBA: return new int[width * height];
-            case GRAYSCALE: return new byte[width * height];
-            default:
-                throw new IllegalArgumentException("Unknown format: " + format);
-        }
+        return bitmap;
     }
 
     private final int width;
     private final int height;
     private final ColorFormat colorFormat;
-    private final Object colorData;
 
-    /**
-     * Creates a new bitmap with the specified size, filled with the specified
-     * color.
-     *
-     * @param width width to create in pixels
-     * @param height height to create in pixels
-     * @param colorFormat format to store colors with
-     * @param fillColor color to fill with
-     */
-    public Bitmap(int width, int height, ColorFormat colorFormat, int fillColor) {
-        this(width, height, colorFormat);
+    private final long dataPtr;
+    private final int dataLen;
+    private final boolean useStbFree;
+
+    public Bitmap(int width, int height, ColorFormat format) {
+        this(width, height, format, nmemAlloc(width * height * format.getByteCount()), false);
+    }
+
+    public Bitmap(int width, int height, ColorFormat format, int fillColor) {
+        this(width, height, format);
         fill(fillColor);
     }
 
-    /**
-     * Creates a new empty bitmap with the specified size.
-     *
-     * @param width width to create in pixels
-     * @param height height to create in pixels
-     * @param colorFormat format to store colors with
-     */
-    public Bitmap(int width, int height, ColorFormat colorFormat) {
-        this(width, height, colorFormat, createDataArray(width, height, colorFormat));
-    }
-
-    private Bitmap(int width, int height, ColorFormat colorFormat, Object colorData) {
+    private Bitmap(int width, int height, ColorFormat colorFormat, long dataPtr, boolean useStbFree) {
         this.width = width;
         this.height = height;
         this.colorFormat = colorFormat;
-        this.colorData = colorData;
+        this.dataPtr = dataPtr;
+        this.dataLen = width * height * colorFormat.getByteCount();
+        this.useStbFree = useStbFree;
     }
 
     private int pixelIdx(int x, int y) {
@@ -137,49 +82,25 @@ public final class Bitmap implements BitmapRegion {
     @Override
     public int getPixel(int x, int y) {
         checkBounds(x, y);
-
-        int i = pixelIdx(x, y);
-        switch (colorFormat) {
-            case RGBA:
-                return ((int[]) colorData)[i];
-            case GRAYSCALE:
-                return ((byte[]) colorData)[i];
-            default:
-                throw new AssertionError();
-        }
+        return colorFormat.getPixel(dataPtr, pixelIdx(x, y));
     }
 
     @Override
     public void setPixel(int x, int y, int color) {
         checkBounds(x, y);
-
-        int i = pixelIdx(x, y);
-        switch (colorFormat) {
-            case RGBA:
-                ((int[]) colorData)[i] = color;
-                break;
-            case GRAYSCALE:
-                ((byte[]) colorData)[i] = (byte) color;
-                break;
-            default:
-                throw new AssertionError();
-        }
+        colorFormat.setPixel(dataPtr, pixelIdx(x, y), color);
     }
 
     @Override
     public void fill(int color) {
-        switch (colorFormat) {
-            case RGBA:
-                Arrays.fill((int[]) colorData, color);
-                break;
-            case GRAYSCALE:
-                Arrays.fill((byte[]) colorData, (byte) color);
-                break;
-        }
+        colorFormat.fillBuffer(dataPtr, width * height, color);
     }
 
     @Override
     public void blit(BitmapRegion img, int x, int y) {
+        if (img.getColorFormat() != colorFormat)
+            throw new IllegalArgumentException("Color formats do not match");
+
         checkBounds(x, y);
 
         int imgW = img.getWidth();
@@ -188,14 +109,21 @@ public final class Bitmap implements BitmapRegion {
             throw new IndexOutOfBoundsException("Image extends out of bounds");
 
         Bitmap src = img.getSourceBitmap();
-        int imgXInSrc = img.getSourceOffsetX();
-        int imgYInSrc = img.getSourceOffsetY();
+        int byteCount = colorFormat.getByteCount();
 
+        int srcStride = src.getWidth() * byteCount;
+        long srcBase = src.dataPtr + img.getSourceOffsetX() * byteCount + img.getSourceOffsetY() * srcStride;
+
+        int dstStride = width * byteCount;
+        long dstBase = dataPtr + x * byteCount + y * dstStride;
+
+        int rowBytes = imgW * byteCount;
         for (int row = 0; row < imgH; row++) {
-            int srcY = row + imgYInSrc;
-            int dstY = y + row;
-
-            System.arraycopy(src.colorData, src.pixelIdx(imgXInSrc, srcY), colorData, pixelIdx(x, dstY), imgW);
+            memCopy(
+                    srcBase + row * srcStride,
+                    dstBase + row * dstStride,
+                    rowBytes
+            );
         }
     }
 
@@ -220,14 +148,18 @@ public final class Bitmap implements BitmapRegion {
         return height;
     }
 
-    @Override
-    public int[] getDataRGBA() {
-        return (int[]) colorData;
+    public ByteBuffer getPixelData() {
+        return memByteBuffer(dataPtr, dataLen);
+    }
+
+    public long getPixelDataPtr() {
+        return dataPtr;
     }
 
     @Override
-    public byte[] getDataGrayscale() {
-        return (byte[]) colorData;
+    public boolean spansFullSource() {
+        // This is the full source!
+        return true;
     }
 
     @Override
@@ -243,5 +175,14 @@ public final class Bitmap implements BitmapRegion {
     @Override
     public int getSourceOffsetY() {
         return 0;
+    }
+
+    @Override
+    public void close() {
+        if (useStbFree) {
+            nstbi_image_free(dataPtr);
+        } else {
+            nmemFree(dataPtr);
+        }
     }
 }

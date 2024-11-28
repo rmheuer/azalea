@@ -2,10 +2,6 @@ package com.github.rmheuer.azalea.render.texture;
 
 import org.joml.Vector2i;
 
-/**
- * Represents a section of a bitmap. Pixel coordinates have the origin in the
- * top-left corner, with +x to the right and +y down.
- */
 public interface BitmapRegion {
     /**
      * Gets the format in which the colors in this bitmap are encoded.
@@ -93,18 +89,12 @@ public interface BitmapRegion {
     int getHeight();
 
     /**
-     * Gets the packed RGBA data of this region.
+     * Gets whether this region spans the whole source bitmap (i.e. it is the
+     * whole image).
      *
-     * @return rgba data
+     * @return whether full source is included
      */
-    int[] getDataRGBA();
-
-    /**
-     * Gets the grayscale data of this region.
-     *
-     * @return grayscale data
-     */
-    byte[] getDataGrayscale();
+    boolean spansFullSource();
 
     /**
      * Gets the {@code Bitmap} the actual image data is stored in.

@@ -143,10 +143,11 @@ public interface Renderer {
      * @throws IOException if an IO error occurs while decoding the image data
      */
     default Texture2D createTexture2D(InputStream in) throws IOException {
-        Bitmap bitmap = Bitmap.decode(in);
-        Texture2D tex = createTexture2D();
-        tex.setData(bitmap);
-        return tex;
+        try (Bitmap bitmap = Bitmap.decode(in)) {
+            Texture2D tex = createTexture2D();
+            tex.setData(bitmap);
+            return tex;
+        }
     }
 
     /**

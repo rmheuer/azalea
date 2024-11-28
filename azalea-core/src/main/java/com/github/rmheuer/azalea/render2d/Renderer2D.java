@@ -49,9 +49,10 @@ public final class Renderer2D implements SafeCloseable {
             throw new RuntimeException("Failed to load built-in shaders", e);
         }
 
-        Bitmap whiteData = new Bitmap(1, 1, ColorFormat.RGBA, Colors.RGBA.WHITE);
-        whiteTex = renderer.createTexture2D();
-        whiteTex.setData(whiteData);
+        try (Bitmap whiteData = new Bitmap(1, 1, ColorFormat.RGBA, Colors.RGBA.WHITE)) {
+            whiteTex = renderer.createTexture2D();
+            whiteTex.setData(whiteData);
+        }
 
         try (ActivePipeline pipe = renderer.bindPipeline(new PipelineInfo(shader))) {
             for (int i = 0; i < MAX_TEXTURE_SLOTS; i++) {

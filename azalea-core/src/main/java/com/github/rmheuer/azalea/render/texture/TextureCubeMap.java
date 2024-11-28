@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
  * A cube-map texture on the GPU. This consists of six 2D textures, one for
  * each cube face.
  */
+// TODO: Checks for face image being square and all same size
 public interface TextureCubeMap extends Texture {
     /**
      * Allocates GPU memory for the specified texture size, without uploading

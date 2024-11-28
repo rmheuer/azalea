@@ -1,7 +1,5 @@
 package com.github.rmheuer.azalea.render.texture;
 
-import java.util.Arrays;
-
 final class SubBitmap implements BitmapRegion {
     private final Bitmap srcBitmap;
     private final int x, y, width, height;
@@ -32,30 +30,35 @@ final class SubBitmap implements BitmapRegion {
     }
 
     @Override
-    public void setPixel(int x, int y, int colorRGBA) {
+    public void setPixel(int x, int y, int color) {
         checkBounds(x, y);
-        srcBitmap.setPixel(this.x + x, this.y + y, colorRGBA);
+        srcBitmap.setPixel(this.x + x, this.y + y, color);
     }
 
     @Override
     public void fill(int color) {
-        if (srcBitmap.getColorFormat() == ColorFormat.RGBA) {
-            int[] rgba = srcBitmap.getDataRGBA();
-            for (int y = 0; y < height; y++) {
-                Arrays.fill(rgba, this.x, this.x + width, color);
-            }
-        } else {
-            byte[] gray = srcBitmap.getDataGrayscale();
-            for (int y = 0; y < height; y++) {
-                Arrays.fill(gray, this.x, this.x + width, (byte) color);
-            }
+        if (spansFullSource()) {
+            srcBitmap.fill(color);
+            return;
+        }
+
+        long srcPtr = srcBitmap.getPixelDataPtr();
+        ColorFormat format = srcBitmap.getColorFormat();
+
+        int byteCount = format.getByteCount();
+        int stride = srcBitmap.getWidth() * byteCount;
+        long base = srcPtr + x * byteCount + y * stride;
+
+        for (int y = 0; y < height; y++) {
+            format.fillBuffer(base + y * stride, width, color);
         }
     }
 
     @Override
     public void blit(BitmapRegion src, int x, int y) {
-        if (x < 0 || y < 0 || x + src.getWidth() > width || y + src.getHeight() > height)
-            throw new IndexOutOfBoundsException(x + ", " + y);
+        checkBounds(x, y);
+        if (x + src.getWidth() > width || y + src.getHeight() > height)
+            throw new IndexOutOfBoundsException("Image extends out of bounds");
 
         srcBitmap.blit(src, x + this.x, y + this.y);
     }
@@ -71,23 +74,8 @@ final class SubBitmap implements BitmapRegion {
     }
 
     @Override
-    public int[] getDataRGBA() {
-        int[] srcData = srcBitmap.getDataRGBA();
-        int[] data = new int[width * height];
-        for (int y = 0; y < height; y++) {
-            System.arraycopy(srcData, this.x + (this.y + y) * srcBitmap.getWidth(), data, y * width, width);
-        }
-        return data;
-    }
-
-    @Override
-    public byte[] getDataGrayscale() {
-        byte[] srcData = srcBitmap.getDataGrayscale();
-        byte[] data = new byte[width * height];
-        for (int y = 0; y < height; y++) {
-            System.arraycopy(srcData, this.x + (this.y + y) * srcBitmap.getWidth(), data, y * width, width);
-        }
-        return data;
+    public boolean spansFullSource() {
+        return width == srcBitmap.getWidth() && height == srcBitmap.getHeight();
     }
 
     @Override

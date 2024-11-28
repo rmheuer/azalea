@@ -1,10 +1,6 @@
 package com.github.rmheuer.azalea.render.opengl;
 
-import com.github.rmheuer.azalea.render.texture.BitmapRegion;
-import com.github.rmheuer.azalea.render.texture.ChannelMapping;
-import com.github.rmheuer.azalea.render.texture.ColorFormat;
-import com.github.rmheuer.azalea.render.texture.Texture;
-import com.github.rmheuer.azalea.utils.SizeOf;
+import com.github.rmheuer.azalea.render.texture.*;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -22,26 +18,47 @@ public abstract class OpenGLTexture implements Texture {
 
     protected abstract void bindToTarget();
 
-    private ByteBuffer bitmapToByteBuffer(BitmapRegion data) {
-        ByteBuffer buf;
-        switch (data.getColorFormat()) {
-            case RGBA: {
-                int[] rgba = data.getDataRGBA();
-                buf = MemoryUtil.memAlloc(rgba.length * SizeOf.INT);
-                buf.asIntBuffer().put(rgba);
-                break;
-            }
-            case GRAYSCALE: {
-                byte[] gray = data.getDataGrayscale();
-                buf = MemoryUtil.memAlloc(gray.length);
-                buf.put(gray);
-                break;
-            }
-            default:
-                throw new AssertionError();
+    private static final class DataPtr {
+        public final long ptr;
+        private final boolean owned;
+
+        public DataPtr(long ptr, boolean owned) {
+            this.ptr = ptr;
+            this.owned = owned;
         }
-        buf.flip();
-        return buf;
+
+        public void freeIfOwned() {
+            if (owned) {
+                MemoryUtil.nmemFree(ptr);
+            }
+        }
+    }
+
+    private DataPtr getBitmapData(BitmapRegion data) {
+        Bitmap src = data.getSourceBitmap();
+        long srcPtr = src.getPixelDataPtr();
+        if (data.spansFullSource()) {
+            return new DataPtr(srcPtr, false);
+        }
+
+        // Data is a sub-region, copy out the region to a new buffer
+
+        ColorFormat format = data.getColorFormat();
+        int byteCount = format.getByteCount();
+
+        int srcStride = src.getWidth() * byteCount;
+        long base = srcPtr
+                + data.getSourceOffsetX() * byteCount
+                + data.getSourceOffsetY() * srcStride;
+
+        int dataStride = data.getWidth() * byteCount;
+        int dataH = data.getHeight();
+        long newBuffer = MemoryUtil.nmemAlloc(dataStride * dataH);
+        for (int y = 0; y < dataH; y++) {
+            MemoryUtil.memCopy(base + y * srcStride, newBuffer + y * dataStride, dataStride);
+        }
+
+        return new DataPtr(newBuffer, true);
     }
 
     private int getGlFormat(ColorFormat format) {
@@ -60,9 +77,13 @@ public abstract class OpenGLTexture implements Texture {
     }
 
     protected void setData(int target, BitmapRegion data) {
-        ByteBuffer buf = bitmapToByteBuffer(data);
-        setData(target, buf, data.getWidth(), data.getHeight(), data.getColorFormat());
-        MemoryUtil.memFree(buf);
+        DataPtr ptr = getBitmapData(data);
+        colorFormat = data.getColorFormat();
+
+        int format = getGlFormat(colorFormat);
+        glTexImage2D(target, 0, format, data.getWidth(), data.getHeight(), 0, format, GL_UNSIGNED_BYTE, ptr.ptr);
+
+        ptr.freeIfOwned();
     }
 
     protected void setSubData(int target, ByteBuffer data, int width, int height, ColorFormat colorFormat, int x, int y) {
@@ -76,9 +97,17 @@ public abstract class OpenGLTexture implements Texture {
     }
 
     protected void setSubData(int target, BitmapRegion data, int x, int y) {
-        ByteBuffer buf = bitmapToByteBuffer(data);
-        setSubData(target, buf, data.getWidth(), data.getHeight(), data.getColorFormat(), x, y);
-        MemoryUtil.memFree(buf);
+        ColorFormat colorFormat = data.getColorFormat();
+        if (this.colorFormat == null)
+            throw new IllegalStateException("Must call setData() or setSize() first");
+        if (this.colorFormat != colorFormat)
+            throw new IllegalArgumentException("Color format does not match: expected " + this.colorFormat + ", given " + colorFormat);
+
+        DataPtr ptr = getBitmapData(data);
+        int format = getGlFormat(colorFormat);
+        glTexSubImage2D(target, 0, x, y, data.getWidth(), data.getHeight(), format, GL_UNSIGNED_BYTE, ptr.ptr);
+
+        ptr.freeIfOwned();
     }
 
     private int getGlChannelSource(ChannelMapping.Source source) {
