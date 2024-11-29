@@ -12,6 +12,8 @@ final class AudioThread extends Thread {
 
     public AudioThread(AudioSystem system) {
         super("Audio Thread");
+        setDaemon(true);
+
         this.system = system;
         sounds = new CopyOnWriteArrayList<>();
     }
