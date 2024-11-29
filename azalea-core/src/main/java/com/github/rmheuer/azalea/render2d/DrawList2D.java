@@ -8,11 +8,11 @@ import com.github.rmheuer.azalea.render.texture.Texture2DRegion;
 import com.github.rmheuer.azalea.render2d.font.Font;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import java.util.*;
 
-// TODO: Remove clipping
+// TODO: Add renderer state change functions (clipping, blending), then allow
+//  multiple draw commands for one buffer
 public class DrawList2D {
     private static final int CURVE_PRECISION = 8;
     private static final float[] curveLookup = new float[CURVE_PRECISION * 2 + 2];
@@ -29,8 +29,6 @@ public class DrawList2D {
     private final List<DrawVertex> vertices;
     private final List<Integer> indices;
 
-    private final Deque<Rectangle> clipStack;
-    private Rectangle clipRect;
     private PoseStack poseStack;
 
     private float depth;
@@ -38,8 +36,6 @@ public class DrawList2D {
     public DrawList2D() {
         vertices = new ArrayList<>();
         indices = new ArrayList<>();
-        clipStack = new ArrayDeque<>();
-        clipRect = null;
         poseStack = new PoseStack();
         depth = 0;
     }
@@ -66,23 +62,6 @@ public class DrawList2D {
 
     public void setDepth(float depth) {
         this.depth = depth;
-    }
-
-    public void pushClip(float x, float y, float w, float h) { pushClip(Rectangle.fromXYSizes(x, y, w, h)); }
-    public void pushClip(float x, float y, Vector2f size) { pushClip(Rectangle.fromXYSizes(x, y, size.x, size.y)); }
-    public void pushClip(Vector2f size, float w, float h) { pushClip(Rectangle.fromXYSizes(size.x, size.y, w, h)); }
-    public void pushClip(Vector2f pos, Vector2f size) { pushClip(Rectangle.fromXYSizes(pos.x, pos.y, size.x, size.y)); }
-    public void pushClip(Rectangle r) {
-        if (clipRect != null) {
-            clipStack.push(clipRect);
-            clipRect = r;//clipRect.intersect(r);
-        } else {
-            clipRect = r;
-        }
-    }
-
-    public void popClip() {
-        clipRect = clipStack.pollFirst();
     }
 
     public void pushTransform() {
@@ -117,9 +96,13 @@ public class DrawList2D {
         vertices.add(new DrawVertex(pos, u, v, tint, tex));
     }
 
-    public void drawText(String text, Vector2f pos, Vector2f align, Font font, int colorRGBA) { drawText(text, pos.x, pos.y, align.x, align.y, font, colorRGBA); }
-    public void drawText(String text, Vector2f pos, float alignX, float alignY, Font font, int colorRGBA) { drawText(text, pos.x, pos.y, alignX, alignY, font, colorRGBA); }
-    public void drawText(String text, float x, float y, Vector2f align, Font font, int colorRGBA) { drawText(text, x, y, align.x, align.y, font, colorRGBA); }
+    private void addIndices(int... i) {
+        int base = vertices.size();
+        for (int index : i) {
+            indices.add(base + index);
+        }
+    }
+
     public void drawText(String text, float x, float y, float alignX, float alignY, Font font, int colorRGBA) {
         float width = font.textWidth(text);
         float ascent = font.getMetrics().getAscent();
@@ -128,7 +111,6 @@ public class DrawList2D {
         drawText(text, x - width * alignX, y + ascent - height * alignY, font, colorRGBA);
     }
 
-    public void drawText(String text, Vector2f pos, Font font, int colorRGBA) { drawText(text, pos.x, pos.y, font, colorRGBA); }
     public void drawText(String text, float x, float y, Font font, int colorRGBA) {
         font.draw(this, text, x, y, colorRGBA);
     }
@@ -138,7 +120,7 @@ public class DrawList2D {
         Vector2f prevPoint = null;
         for (Vector2f point : points) {
             if (prevPoint != null)
-                drawLine(prevPoint, point, width, colorRGBA);
+                drawLine(prevPoint.x, prevPoint.y, point.x, point.y, width, colorRGBA);
 
             prevPoint = point;
         }
@@ -146,14 +128,11 @@ public class DrawList2D {
 
     public void fillConvexPolygon(Vector2f[] points, int colorRGBA) { fillConvexPolygon(Arrays.asList(points), colorRGBA); }
     public void fillConvexPolygon(List<Vector2f> points, int colorRGBA) {
-        List<Vector2f> clipped = clipRect != null ? PolygonClipper.clip(points, clipRect) : points;
-
         int mark = vertices.size();
         boolean setFirst = false;
         int lastIndex = -1;
 
-        for (int i = 0; i < clipped.size(); i++) {
-            Vector2f point = clipped.get(i);
+        for (Vector2f point : points) {
             vertex(point.x, point.y, colorRGBA);
 
             if (!setFirst) {
@@ -170,9 +149,6 @@ public class DrawList2D {
         }
     }
 
-    public void drawLine(Vector2f p1, Vector2f p2, float width, int colorRGBA) { drawLine(p1.x, p1.y, p2.x, p2.y, width, colorRGBA); }
-    public void drawLine(Vector2f p1, float x2, float y2, float width, int colorRGBA) { drawLine(p1.x, p1.y, x2, y2, width, colorRGBA); }
-    public void drawLine(float x1, float y1, Vector2f p2, float width, int colorRGBA) { drawLine(x1, y1, p2.x, p2.y, width, colorRGBA); }
     public void drawLine(float x1, float y1, float x2, float y2, float width, int colorRGBA) {
         Vector2f pos1 = new Vector2f(x1 + 0.5f, y1 + 0.5f);
         Vector2f pos2 = new Vector2f(x2 + 0.5f, y2 + 0.5f);
@@ -188,45 +164,31 @@ public class DrawList2D {
         Vector2f p3 = new Vector2f(pos2).add(dir).add(perp);
         Vector2f p4 = new Vector2f(pos2).add(dir).sub(perp);
 
-        fillConvexPolygon(new Vector2f[] {p1, p2, p3, p4}, colorRGBA);
+        addIndices(0, 1, 2, 0, 2, 3);
+        vertex(p1.x, p1.y, colorRGBA);
+        vertex(p2.x, p2.y, colorRGBA);
+        vertex(p3.x, p3.y, colorRGBA);
+        vertex(p4.x, p4.y, colorRGBA);
     }
 
-    public void drawQuad(Rectangle r, float width, int colorRGBA) { drawQuad(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), width, colorRGBA); }
-    public void drawQuad(Vector2f pos, Vector2f size, float width, int colorRGBA) { drawQuad(pos.x, pos.y, size.x, size.y, width, colorRGBA); }
-    public void drawQuad(Vector2f pos, float w, float h, float width, int colorRGBA) { drawQuad(pos.x, pos.y, w, h, width, colorRGBA); }
-    public void drawQuad(float x, float y, Vector2f size, float width, int colorRGBA) { drawQuad(x, y, size.x, size.y, width, colorRGBA); }
     public void drawQuad(float x, float y, float w, float h, float width, int colorRGBA) {
-        drawLineStrip(new Vector2f[] {
-                new Vector2f(x, y),
-                new Vector2f(x + w - 1, y),
-                new Vector2f(x + w - 1, y + h - 1),
-                new Vector2f(x, y + h - 1),
-                new Vector2f(x, y) // loop around
-        }, width, colorRGBA);
+        float x2 = x + w - 1;
+        float y2 = y + h - 1;
+        drawLine(x, y, x2, y, width, colorRGBA);
+        drawLine(x2, y, x2, y2, width, colorRGBA);
+        drawLine(x2, y2, x, y2, width, colorRGBA);
+        drawLine(x, y2, x, y, width, colorRGBA);
     }
 
-    public void fillQuad(Rectangle r, int colorRGBA) { fillQuad(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), colorRGBA); }
-    public void fillQuad(Vector2f pos, Vector2f size, int colorRGBA) { fillQuad(pos.x, pos.y, size.x, size.y, colorRGBA); }
-    public void fillQuad(Vector2f pos, float w, float h, int colorRGBA) { fillQuad(pos.x, pos.y, w, h, colorRGBA); }
-    public void fillQuad(float x, float y, Vector2f size, int colorRGBA) { fillQuad(x, y, size.x, size.y, colorRGBA); }
     public void fillQuad(float x, float y, float w, float h, int colorRGBA) {
-        fillConvexPolygon(new Vector2f[] {
-                new Vector2f(x, y),
-                new Vector2f(x + w, y),
-                new Vector2f(x + w, y + h),
-                new Vector2f(x, y + h)
-        }, colorRGBA);
+        addIndices(0, 1, 2, 0, 2, 3);
+        vertex(x, y, colorRGBA);
+        vertex(x + w, y, colorRGBA);
+        vertex(x + w, y + h, colorRGBA);
+        vertex(x, y + h, colorRGBA);
     }
 
-    public void drawRoundedQuad(Rectangle r, float rad, float width, int colorRGBA) { drawRoundedQuad(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), rad, rad, rad, rad, width, colorRGBA); }
-    public void drawRoundedQuad(Vector2f pos, Vector2f size, float rad, float width, int colorRGBA) { drawRoundedQuad(pos.x, pos.y, size.x, size.y, rad, rad, rad, rad, width, colorRGBA); }
-    public void drawRoundedQuad(Vector2f pos, float w, float h, float rad, float width, int colorRGBA) { drawRoundedQuad(pos.x, pos.y, w, h, rad, rad, rad, rad, width, colorRGBA); }
-    public void drawRoundedQuad(float x, float y, Vector2f size, float rad, float width, int colorRGBA) { drawRoundedQuad(x, y, size.x, size.y, rad, rad, rad, rad, width, colorRGBA); }
     public void drawRoundedQuad(float x, float y, float w, float h, float rad, float width, int colorRGBA) { drawRoundedQuad(x, y, w, h, rad, rad, rad, rad, width, colorRGBA); }
-    public void drawRoundedQuad(Rectangle r, float ul, float ur, float ll, float lr, float width, int colorRGBA) { drawRoundedQuad(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), ul, ur, ll, lr, width, colorRGBA); }
-    public void drawRoundedQuad(Vector2f pos, Vector2f size, float ul, float ur, float ll, float lr, float width, int colorRGBA) { drawRoundedQuad(pos.x, pos.y, size.x, size.y, ul, ur, ll, lr, width, colorRGBA); }
-    public void drawRoundedQuad(Vector2f pos, float w, float h, float ul, float ur, float ll, float lr, float width, int colorRGBA) { drawRoundedQuad(pos.x, pos.y, w, h, ul, ur, ll, lr, width, colorRGBA); }
-    public void drawRoundedQuad(float x, float y, Vector2f size, float ul, float ur, float ll, float lr, float width, int colorRGBA) { drawRoundedQuad(x, y, size.x, size.y, ul, ur, ll, lr, width, colorRGBA); }
     public void drawRoundedQuad(float x, float y, float w, float h, float ul, float ur, float ll, float lr, float width, int colorRGBA) {
         float mx = x + w - 1;
         float my = y + h - 1;
@@ -251,15 +213,7 @@ public class DrawList2D {
         }
     }
 
-    public void fillRoundedQuad(Rectangle r, float rad, int colorRGBA) { fillRoundedQuad(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), rad, rad, rad, rad, colorRGBA); }
-    public void fillRoundedQuad(Vector2f pos, Vector2f size, float rad, int colorRGBA) { fillRoundedQuad(pos.x, pos.y, size.x, size.y, rad, rad, rad, rad, colorRGBA); }
-    public void fillRoundedQuad(Vector2f pos, float w, float h, float rad, int colorRGBA) { fillRoundedQuad(pos.x, pos.y, w, h, rad, rad, rad, rad, colorRGBA); }
-    public void fillRoundedQuad(float x, float y, Vector2f size, float rad, int colorRGBA) { fillRoundedQuad(x, y, size.x, size.y, rad, rad, rad, rad, colorRGBA); }
     public void fillRoundedQuad(float x, float y, float w, float h, float rad, int colorRGBA) { fillRoundedQuad(x, y, w, h, rad, rad, rad, rad, colorRGBA); }
-    public void fillRoundedQuad(Rectangle r, float ul, float ur, float ll, float lr, int colorRGBA) { fillRoundedQuad(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), ul, ur, ll, lr, colorRGBA); }
-    public void fillRoundedQuad(Vector2f pos, Vector2f size, float ul, float ur, float ll, float lr, int colorRGBA) { fillRoundedQuad(pos.x, pos.y, size.x, size.y, ul, ur, ll, lr, colorRGBA); }
-    public void fillRoundedQuad(Vector2f pos, float w, float h, float ul, float ur, float ll, float lr, int colorRGBA) { fillRoundedQuad(pos.x, pos.y, w, h, ul, ur, ll, lr, colorRGBA); }
-    public void fillRoundedQuad(float x, float y, Vector2f size, float ul, float ur, float ll, float lr, int colorRGBA) { fillRoundedQuad(x, y, size.x, size.y, ul, ur, ll, lr, colorRGBA); }
     public void fillRoundedQuad(float x, float y, float w, float h, float ul, float ur, float ll, float lr, int colorRGBA) {
         float maxX = x + w;
         float maxY = y + h;
@@ -296,122 +250,45 @@ public class DrawList2D {
         fillConvexPolygon(v, colorRGBA);
     }
 
-    public void drawTriangle(Vector2f p1, Vector2f p2, Vector2f p3, float width, int colorRGBA) { drawTriangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, width, colorRGBA); }
-    public void drawTriangle(Vector2f p1, Vector2f p2, float x3, float y3, float width, int colorRGBA) { drawTriangle(p1.x, p1.y, p2.x, p2.y, x3, y3, width, colorRGBA); }
-    public void drawTriangle(Vector2f p1, float x2, float y2, Vector2f p3, float width, int colorRGBA) { drawTriangle(p1.x, p1.y, x2, y2, p3.x, p3.y, width, colorRGBA); }
-    public void drawTriangle(Vector2f p1, float x2, float y2, float x3, float y3, float width, int colorRGBA) { drawTriangle(p1.x, p1.y, x2, y2, x3, y3, width, colorRGBA); }
-    public void drawTriangle(float x1, float y1, Vector2f p2, Vector2f p3, float width, int colorRGBA) { drawTriangle(x1, y1, p2.x, p2.y, p3.x, p3.y, width, colorRGBA); }
-    public void drawTriangle(float x1, float y1, Vector2f p2, float x3, float y3, float width, int colorRGBA) { drawTriangle(x1, y1, p2.x, p2.y, x3, y3, width, colorRGBA); }
-    public void drawTriangle(float x1, float y1, float x2, float y2, Vector2f p3, float width, int colorRGBA) { drawTriangle(x1, y1, x2, y2, p3.x, p3.y, width, colorRGBA); }
     public void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3, float width, int colorRGBA) {
-        drawLineStrip(new Vector2f[] {
-                new Vector2f(x1, y1),
-                new Vector2f(x2, y2),
-                new Vector2f(x3, y3),
-                new Vector2f(x1, y1)
-        }, width, colorRGBA);
+        drawLine(x1, y1, x2, y2, width, colorRGBA);
+        drawLine(x2, y2, x3, y3, width, colorRGBA);
+        drawLine(x3, y3, x1, y1, width, colorRGBA);
     }
 
-    public void fillTriangle(Vector2f p1, Vector2f p2, Vector2f p3, int colorRGBA) { fillTriangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, colorRGBA); }
-    public void fillTriangle(Vector2f p1, Vector2f p2, float x3, float y3, int colorRGBA) { fillTriangle(p1.x, p1.y, p2.x, p2.y, x3, y3, colorRGBA); }
-    public void fillTriangle(Vector2f p1, float x2, float y2, Vector2f p3, int colorRGBA) { fillTriangle(p1.x, p1.y, x2, y2, p3.x, p3.y, colorRGBA); }
-    public void fillTriangle(Vector2f p1, float x2, float y2, float x3, float y3, int colorRGBA) { fillTriangle(p1.x, p1.y, x2, y2, x3, y3, colorRGBA); }
-    public void fillTriangle(float x1, float y1, Vector2f p2, Vector2f p3, int colorRGBA) { fillTriangle(x1, y1, p2.x, p2.y, p3.x, p3.y, colorRGBA); }
-    public void fillTriangle(float x1, float y1, Vector2f p2, float x3, float y3, int colorRGBA) { fillTriangle(x1, y1, p2.x, p2.y, x3, y3, colorRGBA); }
-    public void fillTriangle(float x1, float y1, float x2, float y2, Vector2f p3, int colorRGBA) { fillTriangle(x1, y1, x2, y2, p3.x, p3.y, colorRGBA); }
     public void fillTriangle(float x1, float y1, float x2, float y2, float x3, float y3, int colorRGBA) {
-        fillConvexPolygon(new Vector2f[] {
-                new Vector2f(x1, y1),
-                new Vector2f(x2, y2),
-                new Vector2f(x3, y3)
-        }, colorRGBA);
+        addIndices(0, 1, 2);
+        vertex(x1, y1, colorRGBA);
+        vertex(x2, y2, colorRGBA);
+        vertex(x3, y3, colorRGBA);
     }
 
-    public void drawImage(Rectangle r, Texture2DRegion img) { drawImage(r, img, 0, 0, 1, 1); }
-    public void drawImage(Rectangle r, Texture2DRegion img, Rectangle uvs) { drawImage(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), img, uvs.getMin().x, uvs.getMin().y, uvs.getMax().x, uvs.getMax().y); }
-    public void drawImage(Rectangle r, Texture2DRegion img, Vector2f uv0, Vector2f uv1) { drawImage(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), img, uv0.x, uv0.y, uv1.x, uv1.y); }
-    public void drawImage(Rectangle r, Texture2DRegion img, Vector2f uv0, float u1, float v1) { drawImage(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), img, uv0.x, uv0.y, u1, v1); }
-    public void drawImage(Rectangle r, Texture2DRegion img, float u0, float v0, Vector2f uv1) { drawImage(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), img, u0, v0, uv1.x, uv1.y); }
-    public void drawImage(Rectangle r, Texture2DRegion img, float u0, float v0, float u1, float v1) { drawImage(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), img, u0, v0, u1, v1); }
-    public void drawImage(Vector2f pos, Vector2f size, Texture2DRegion img, Rectangle uvs) { drawImage(pos.x, pos.y, size.x, size.y, img, uvs.getMin().x, uvs.getMin().y, uvs.getMax().x, uvs.getMax().y); }
-    public void drawImage(Vector2f pos, float w, float h, Texture2DRegion img, Rectangle uvs) { drawImage(pos.x, pos.y, w, h, img, uvs.getMin().x, uvs.getMin().y, uvs.getMax().x, uvs.getMax().y); }
-    public void drawImage(float x, float y, Vector2f size, Texture2DRegion img, Rectangle uvs) { drawImage(x, y, size.x, size.y, img, uvs.getMin().x, uvs.getMin().y, uvs.getMax().x, uvs.getMax().y); }
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, Rectangle uvs) { drawImage(x, y, w, h, img, uvs.getMin().x, uvs.getMin().y, uvs.getMax().x, uvs.getMax().y); }
-    public void drawImage(Vector2f pos, Vector2f size, Texture2DRegion img, Vector2f uv0, Vector2f uv1) { drawImage(pos.x, pos.y, size.x, size.y, img, uv0.x, uv0.y, uv1.x, uv1.y); }
-    public void drawImage(Vector2f pos, Vector2f size, Texture2DRegion img, Vector2f uv0, float u1, float v1) { drawImage(pos.x, pos.y, size.x, size.y, img, uv0.x, uv0.y, u1, v1); }
-    public void drawImage(Vector2f pos, Vector2f size, Texture2DRegion img, float u0, float v0, Vector2f uv1) { drawImage(pos.x, pos.y, size.x, size.y, img, u0, v0, uv1.x, uv1.y); }
-    public void drawImage(Vector2f pos, Vector2f size, Texture2DRegion img, float u0, float v0, float u1, float v1) { drawImage(pos.x, pos.y, size.x, size.y, img, u0, v0, u1, v1); }
-    public void drawImage(Vector2f pos, float w, float h, Texture2DRegion img, Vector2f uv0, Vector2f uv1) { drawImage(pos.x, pos.y, w, h, img, uv0.x, uv0.y, uv1.x, uv1.y); }
-    public void drawImage(Vector2f pos, float w, float h, Texture2DRegion img, Vector2f uv0, float u1, float v1) { drawImage(pos.x, pos.y, w, h, img, uv0.x, uv0.y, u1, v1); }
-    public void drawImage(Vector2f pos, float w, float h, Texture2DRegion img, float u0, float v0, Vector2f uv1) { drawImage(pos.x, pos.y, w, h, img, u0, v0, uv1.x, uv1.y); }
-    public void drawImage(Vector2f pos, float w, float h, Texture2DRegion img, float u0, float v0, float u1, float v1) { drawImage(pos.x, pos.y, w, h, img, u0, v0, u1, v1); }
-    public void drawImage(float x, float y, Vector2f size, Texture2DRegion img, Vector2f uv0, Vector2f uv1) { drawImage(x, y, size.x, size.y, img, uv0.x, uv0.y, uv1.x, uv1.y); }
-    public void drawImage(float x, float y, Vector2f size, Texture2DRegion img, Vector2f uv0, float u1, float v1) { drawImage(x, y, size.x, size.y, img, uv0.x, uv0.y, u1, v1); }
-    public void drawImage(float x, float y, Vector2f size, Texture2DRegion img, float u0, float v0, Vector2f uv1) { drawImage(x, y, size.x, size.y, img, u0, v0, uv1.x, uv1.y); }
-    public void drawImage(float x, float y, Vector2f size, Texture2DRegion img, float u0, float v0, float u1, float v1) { drawImage(x, y, size.x, size.y, img, u0, v0, u1, v1); }
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, Vector2f uv0, Vector2f uv1) { drawImage(x, y, w, h, img, uv0.x, uv0.y, uv1.x, uv1.y); }
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, Vector2f uv0, float u1, float v1) { drawImage(x, y, w, h, img, uv0.x, uv0.y, u1, v1); }
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, float u0, float v0, Vector2f uv1) { drawImage(x, y, w, h, img, u0, v0, uv1.x, uv1.y); }
+    public void drawImage(float x, float y, float w, float h, Texture2DRegion img) { drawImage(x, y, w, h, img, Colors.RGBA.WHITE, 0, 0, 1, 1); }
+    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, int tintRGBA) { drawImage(x, y, w, h, img, tintRGBA, 0, 0, 1, 1); }
     public void drawImage(float x, float y, float w, float h, Texture2DRegion img, float u0, float v0, float u1, float v1) { drawImage(x, y, w, h, img, Colors.RGBA.WHITE, u0, v0, u1, v1); }
-    public void drawImage(Rectangle r, Texture2DRegion img, int tintRGBA, Rectangle uvs) { drawImage(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), img, tintRGBA, uvs.getMin().x, uvs.getMin().y, uvs.getMax().x, uvs.getMax().y); }
-    public void drawImage(Rectangle r, Texture2DRegion img, int tintRGBA, Vector2f uv0, Vector2f uv1) { drawImage(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), img, tintRGBA, uv0.x, uv0.y, uv1.x, uv1.y); }
-    public void drawImage(Rectangle r, Texture2DRegion img, int tintRGBA, Vector2f uv0, float u1, float v1) { drawImage(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), img, tintRGBA, uv0.x, uv0.y, u1, v1); }
-    public void drawImage(Rectangle r, Texture2DRegion img, int tintRGBA, float u0, float v0, Vector2f uv1) { drawImage(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), img, tintRGBA, u0, v0, uv1.x, uv1.y); }
-    public void drawImage(Rectangle r, Texture2DRegion img, int tintRGBA, float u0, float v0, float u1, float v1) { drawImage(r.getMin().x, r.getMin().y, r.getWidth(), r.getHeight(), img, tintRGBA, u0, v0, u1, v1); }
-    public void drawImage(Vector2f pos, Vector2f size, Texture2DRegion img, int tintRGBA, Rectangle uvs) { drawImage(pos.x, pos.y, size.x, size.y, img, tintRGBA, uvs.getMin().x, uvs.getMin().y, uvs.getMax().x, uvs.getMax().y); }
-    public void drawImage(Vector2f pos, float w, float h, Texture2DRegion img, int tintRGBA, Rectangle uvs) { drawImage(pos.x, pos.y, w, h, img, tintRGBA, uvs.getMin().x, uvs.getMin().y, uvs.getMax().x, uvs.getMax().y); }
-    public void drawImage(float x, float y, Vector2f size, Texture2DRegion img, int tintRGBA, Rectangle uvs) { drawImage(x, y, size.x, size.y, img, tintRGBA, uvs.getMin().x, uvs.getMin().y, uvs.getMax().x, uvs.getMax().y); }
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, int tintRGBA, Rectangle uvs) { drawImage(x, y, w, h, img, tintRGBA, uvs.getMin().x, uvs.getMin().y, uvs.getMax().x, uvs.getMax().y); }
-    public void drawImage(Vector2f pos, Vector2f size, Texture2DRegion img, int tintRGBA, Vector2f uv0, Vector2f uv1) { drawImage(pos.x, pos.y, size.x, size.y, img, tintRGBA, uv0.x, uv0.y, uv1.x, uv1.y); }
-    public void drawImage(Vector2f pos, Vector2f size, Texture2DRegion img, int tintRGBA, Vector2f uv0, float u1, float v1) { drawImage(pos.x, pos.y, size.x, size.y, img, tintRGBA, uv0.x, uv0.y, u1, v1); }
-    public void drawImage(Vector2f pos, Vector2f size, Texture2DRegion img, int tintRGBA, float u0, float v0, Vector2f uv1) { drawImage(pos.x, pos.y, size.x, size.y, img, tintRGBA, u0, v0, uv1.x, uv1.y); }
-    public void drawImage(Vector2f pos, Vector2f size, Texture2DRegion img, int tintRGBA, float u0, float v0, float u1, float v1) { drawImage(pos.x, pos.y, size.x, size.y, img, tintRGBA, u0, v0, u1, v1); }
-    public void drawImage(Vector2f pos, float w, float h, Texture2DRegion img, int tintRGBA, Vector2f uv0, Vector2f uv1) { drawImage(pos.x, pos.y, w, h, img, tintRGBA, uv0.x, uv0.y, uv1.x, uv1.y); }
-    public void drawImage(Vector2f pos, float w, float h, Texture2DRegion img, int tintRGBA, Vector2f uv0, float u1, float v1) { drawImage(pos.x, pos.y, w, h, img, tintRGBA, uv0.x, uv0.y, u1, v1); }
-    public void drawImage(Vector2f pos, float w, float h, Texture2DRegion img, int tintRGBA, float u0, float v0, Vector2f uv1) { drawImage(pos.x, pos.y, w, h, img, tintRGBA, u0, v0, uv1.x, uv1.y); }
-    public void drawImage(Vector2f pos, float w, float h, Texture2DRegion img, int tintRGBA, float u0, float v0, float u1, float v1) { drawImage(pos.x, pos.y, w, h, img, tintRGBA, u0, v0, u1, v1); }
-    public void drawImage(float x, float y, Vector2f size, Texture2DRegion img, int tintRGBA, Vector2f uv0, Vector2f uv1) { drawImage(x, y, size.x, size.y, img, tintRGBA, uv0.x, uv0.y, uv1.x, uv1.y); }
-    public void drawImage(float x, float y, Vector2f size, Texture2DRegion img, int tintRGBA, Vector2f uv0, float u1, float v1) { drawImage(x, y, size.x, size.y, img, tintRGBA, uv0.x, uv0.y, u1, v1); }
-    public void drawImage(float x, float y, Vector2f size, Texture2DRegion img, int tintRGBA, float u0, float v0, Vector2f uv1) { drawImage(x, y, size.x, size.y, img, tintRGBA, u0, v0, uv1.x, uv1.y); }
-    public void drawImage(float x, float y, Vector2f size, Texture2DRegion img, int tintRGBA, float u0, float v0, float u1, float v1) { drawImage(x, y, size.x, size.y, img, tintRGBA, u0, v0, u1, v1); }
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, int tintRGBA, Vector2f uv0, Vector2f uv1) { drawImage(x, y, w, h, img, tintRGBA, uv0.x, uv0.y, uv1.x, uv1.y); }
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, int tintRGBA, Vector2f uv0, float u1, float v1) { drawImage(x, y, w, h, img, tintRGBA, uv0.x, uv0.y, u1, v1); }
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, int tintRGBA, float u0, float v0, Vector2f uv1) { drawImage(x, y, w, h, img, tintRGBA, u0, v0, uv1.x, uv1.y); }
     public void drawImage(float x, float y, float w, float h, Texture2DRegion img, int tintRGBA, float u0, float v0, float u1, float v1) {
-        Rectangle rect = Rectangle.fromXYSizes(x, y, w, h);
-        if (clipRect != null)
-             rect = rect.intersect(clipRect);
-        if (!rect.isValid())
-            return;
-
-        Vector2f min = rect.getMin();
-        Vector2f max = rect.getMax();
-
-        int mark = vertices.size();
-        vertex(min.x, min.y, MathUtil.map(min.x, x, x + w, u0, u1), MathUtil.map(min.y, y, y + h, v0, v1), tintRGBA, img);
-        vertex(max.x, min.y, MathUtil.map(max.x, x, x + w, u0, u1), MathUtil.map(min.y, y, y + h, v0, v1), tintRGBA, img);
-        vertex(max.x, max.y, MathUtil.map(max.x, x, x + w, u0, u1), MathUtil.map(max.y, y, y + h, v0, v1), tintRGBA, img);
-        vertex(min.x, max.y, MathUtil.map(min.x, x, x + w, u0, u1), MathUtil.map(max.y, y, y + h, v0, v1), tintRGBA, img);
-        indices.add(mark);
-        indices.add(mark + 1);
-        indices.add(mark + 2);
-        indices.add(mark);
-        indices.add(mark + 2);
-        indices.add(mark + 3);
+        addIndices(0, 1, 2, 0, 2, 3);
+        vertex(x, y, u0, v0, tintRGBA, img);
+        vertex(x + w, y, u1, v0, tintRGBA, img);
+        vertex(x + w, y + h, u1, v1, tintRGBA, img);
+        vertex(x, y + h, u0, v1, tintRGBA, img);
     }
 
-    public void drawImageQuad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, Texture2DRegion img, int tintRGBA, float u0, float v0, float u1, float v1, float u2, float v2, float u3, float v3) {
-        // TODO: Clip
-        int mark = vertices.size();
+    public void drawImageQuad(
+            float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4,
+            Texture2DRegion img,
+            float u0, float v0, float u1, float v1, float u2, float v2, float u3, float v3) {
+        drawImageQuad(x1, y1, x2, y2, x3, y3, x4, y4, img, Colors.RGBA.WHITE, u0, v0, u1, v1, u2, v2, u3, v3);
+    }
+
+    public void drawImageQuad(
+            float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4,
+            Texture2DRegion img, int tintRGBA,
+            float u0, float v0, float u1, float v1, float u2, float v2, float u3, float v3) {
+        addIndices(0, 1, 2, 0, 2, 3);
         vertex(x1, y1, u0, v0, tintRGBA, img);
         vertex(x2, y2, u1, v1, tintRGBA, img);
         vertex(x3, y3, u2, v2, tintRGBA, img);
         vertex(x4, y4, u3, v3, tintRGBA, img);
-        indices.add(mark);
-        indices.add(mark + 1);
-        indices.add(mark + 2);
-        indices.add(mark);
-        indices.add(mark + 2);
-        indices.add(mark + 3);
     }
 }

@@ -2,6 +2,7 @@ package com.github.rmheuer.azalea.render2d.font;
 
 import com.github.rmheuer.azalea.render2d.DrawList2D;
 import com.github.rmheuer.azalea.utils.SafeCloseable;
+import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 /**
@@ -34,9 +35,10 @@ public abstract class Font implements SafeCloseable {
                 continue;
             }
 
+            Vector2f size = glyph.getSize();
             r.drawImage(
                     x + glyph.getOffset().x, y + glyph.getOffset().y,
-                    glyph.getSize(),
+                    size.x, size.y,
                     glyph.getTexture(),
                     colorRGBA,
                     glyph.getUVMin().x, glyph.getUVMin().y,
