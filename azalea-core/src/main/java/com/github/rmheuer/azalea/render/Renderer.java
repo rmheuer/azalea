@@ -3,7 +3,9 @@ package com.github.rmheuer.azalea.render;
 import com.github.rmheuer.azalea.io.IOUtil;
 import com.github.rmheuer.azalea.render.framebuffer.Framebuffer;
 import com.github.rmheuer.azalea.render.framebuffer.FramebufferBuilder;
+import com.github.rmheuer.azalea.render.mesh.IndexBuffer;
 import com.github.rmheuer.azalea.render.mesh.Mesh;
+import com.github.rmheuer.azalea.render.mesh.VertexBuffer;
 import com.github.rmheuer.azalea.render.pipeline.ActivePipeline;
 import com.github.rmheuer.azalea.render.pipeline.PipelineInfo;
 import com.github.rmheuer.azalea.render.shader.ShaderProgram;
@@ -118,12 +120,30 @@ public interface Renderer {
     }
 
     /**
+     * Creates an empty {@code VertexBuffer}. You will need to upload data to
+     * the buffer before drawing it.
+     *
+     * @return the created vertex buffer
+     */
+    VertexBuffer createVertexBuffer();
+
+    /**
+     * Creates an empty {@code IndexBuffer}. You will need to upload data to
+     * the buffer before drawing it.
+     *
+     * @return the created index buffer
+     */
+    IndexBuffer createIndexBuffer();
+
+    /**
      * Creates an empty {@code Mesh}. You will need to upload data to the mesh
      * before drawing it.
      *
      * @return the created mesh
      */
-    Mesh createMesh();
+    default Mesh createMesh() {
+        return new Mesh(createVertexBuffer(), createIndexBuffer());
+    }
 
     /**
      * Creates an empty {@code Texture2D}. You will need to upload data to the

@@ -3,7 +3,9 @@ package com.github.rmheuer.azalea.render.opengl;
 import com.github.rmheuer.azalea.render.*;
 import com.github.rmheuer.azalea.render.framebuffer.Framebuffer;
 import com.github.rmheuer.azalea.render.framebuffer.FramebufferBuilder;
-import com.github.rmheuer.azalea.render.mesh.Mesh;
+import com.github.rmheuer.azalea.render.mesh.IndexBuffer;
+import com.github.rmheuer.azalea.render.mesh.PrimitiveType;
+import com.github.rmheuer.azalea.render.mesh.VertexBuffer;
 import com.github.rmheuer.azalea.render.pipeline.ActivePipeline;
 import com.github.rmheuer.azalea.render.pipeline.CullMode;
 import com.github.rmheuer.azalea.render.pipeline.FaceWinding;
@@ -153,8 +155,13 @@ public final class OpenGLRenderer implements Renderer {
     }
 
     @Override
-    public Mesh createMesh() {
-        return new OpenGLMesh();
+    public VertexBuffer createVertexBuffer() {
+        return new OpenGLVertexBuffer();
+    }
+
+    @Override
+    public IndexBuffer createIndexBuffer() {
+        return new OpenGLIndexBuffer();
     }
 
     @Override
@@ -176,6 +183,20 @@ public final class OpenGLRenderer implements Renderer {
     public FramebufferBuilder createFramebufferBuilder(int width, int height) {
         return new OpenGLFramebufferBuilder(width, height);
     }
+    
+    public static int getGlPrimitiveType(PrimitiveType primitiveType) {
+        switch (primitiveType) {
+            case POINTS: return GL_POINTS; 
+            case LINE_STRIP: return GL_LINE_STRIP; 
+            case LINE_LOOP: return GL_LINE_LOOP; 
+            case LINES: return GL_LINES; 
+            case TRIANGLE_STRIP: return GL_TRIANGLE_STRIP; 
+            case TRIANGLE_FAN: return GL_TRIANGLE_FAN; 
+            case TRIANGLES: return GL_TRIANGLES; 
+            default:
+                throw new IllegalArgumentException("Unknown primitive type: " + primitiveType);
+        }
+    }
 
     private final class ActivePipelineImpl implements ActivePipeline {
         private final OpenGLShaderProgram shader;
@@ -195,8 +216,21 @@ public final class OpenGLRenderer implements Renderer {
         }
 
         @Override
-        public void draw(Mesh mesh) {
-            ((OpenGLMesh) mesh).render();
+        public void draw(VertexBuffer vertices, PrimitiveType primType) {
+            OpenGLVertexBuffer vertexBuf = (OpenGLVertexBuffer) vertices;
+            
+            glBindVertexArray(vertexBuf.getVAO());
+            glDrawArrays(getGlPrimitiveType(primType), 0, vertexBuf.getVertexCount());
+        }
+
+        @Override
+        public void draw(VertexBuffer vertices, IndexBuffer indices) {
+            OpenGLVertexBuffer vertexBuf = (OpenGLVertexBuffer) vertices;
+            OpenGLIndexBuffer indexBuf = (OpenGLIndexBuffer) indices;
+
+            glBindVertexArray(vertexBuf.getVAO());
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuf.getId());
+            glDrawElements(indexBuf.getGlPrimType(), indexBuf.getIndexCount(), GL_UNSIGNED_INT, 0L);
         }
 
         @Override

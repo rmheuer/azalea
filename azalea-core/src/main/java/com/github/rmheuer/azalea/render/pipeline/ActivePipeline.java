@@ -1,6 +1,9 @@
 package com.github.rmheuer.azalea.render.pipeline;
 
+import com.github.rmheuer.azalea.render.mesh.IndexBuffer;
 import com.github.rmheuer.azalea.render.mesh.Mesh;
+import com.github.rmheuer.azalea.render.mesh.PrimitiveType;
+import com.github.rmheuer.azalea.render.mesh.VertexBuffer;
 import com.github.rmheuer.azalea.render.shader.ShaderUniform;
 import com.github.rmheuer.azalea.render.texture.Texture;
 import com.github.rmheuer.azalea.utils.SafeCloseable;
@@ -27,9 +30,29 @@ public interface ActivePipeline extends SafeCloseable {
     ShaderUniform getUniform(String name);
 
     /**
+     * Renders a buffer of vertices to the current framebuffer, using the bound
+     * textures. The vertices in the buffer will be processed in order.
+     *
+     * @param vertices buffer containing vertices to render.
+     * @param primType type of primitives to combine vertices into
+     */
+    void draw(VertexBuffer vertices, PrimitiveType primType);
+
+    /**
+     * Renders a mesh to the current framebuffer, using the bound textures. The
+     * vertices will be processed in the order defined by the index buffer.
+     *
+     * @param vertices vertices to render, referenced by the indices
+     * @param indices indices into the vertex buffer to draw
+     */
+    void draw(VertexBuffer vertices, IndexBuffer indices);
+
+    /**
      * Renders a mesh to the current framebuffer, using the bound textures.
      *
      * @param mesh mesh to render
      */
-    void draw(Mesh mesh);
+    default void draw(Mesh mesh) {
+        draw(mesh.getVertexBuffer(), mesh.getIndexBuffer());
+    }
 }

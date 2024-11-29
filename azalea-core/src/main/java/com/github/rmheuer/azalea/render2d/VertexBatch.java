@@ -1,7 +1,7 @@
 package com.github.rmheuer.azalea.render2d;
 
 import com.github.rmheuer.azalea.render.mesh.AttribType;
-import com.github.rmheuer.azalea.render.mesh.MeshData;
+import com.github.rmheuer.azalea.render.mesh.IndexedVertexData;
 import com.github.rmheuer.azalea.render.mesh.PrimitiveType;
 import com.github.rmheuer.azalea.render.mesh.VertexLayout;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
@@ -24,14 +24,14 @@ final class VertexBatch {
     );
 
     private final Texture2D[] textures;
-    private final MeshData data;
+    private final IndexedVertexData data;
 
     /**
      * Creates a new empty batch.
      */
     public VertexBatch() {
         textures = new Texture2D[Renderer2D.MAX_TEXTURE_SLOTS];
-        data = new MeshData(PrimitiveType.TRIANGLES, LAYOUT);
+        data = new IndexedVertexData(LAYOUT, PrimitiveType.TRIANGLES);
     }
 
     /**
@@ -66,11 +66,10 @@ final class VertexBatch {
         if (textureSlot == -1)
             return false;
 
-        data.putVec3(v.getPos())
-                .putVec2(v.getU(), v.getV())
-//                .putVec4(v.getColor())
-                .putColorRGBA(v.getColor())
-                .putFloat(textureSlot);
+        data.putVec3(v.getPos());
+        data.putVec2(v.getU(), v.getV());
+        data.putColorRGBA(v.getColor());
+        data.putFloat(textureSlot);
 
         return true;
     }
@@ -81,7 +80,7 @@ final class VertexBatch {
      * @param index index to add
      */
     public void addIndex(int index) {
-        data.index(index);
+        data.indexAbsolute(index);
     }
 
     /**
@@ -91,7 +90,7 @@ final class VertexBatch {
      */
     public void addIndices(List<Integer> indices) {
         for (int i : indices) {
-            data.index(i);
+            data.indexAbsolute(i);
         }
     }
 
@@ -110,7 +109,7 @@ final class VertexBatch {
      *
      * @return generated data
      */
-    public MeshData getData() {
+    public IndexedVertexData getData() {
         return data;
     }
 }
