@@ -230,7 +230,7 @@ public final class OpenGLRenderer implements Renderer {
         }
 
         @Override
-        public void draw(VertexBuffer vertices, IndexBuffer indices, int startIdx, int count) {
+        public void draw(VertexBuffer vertices, IndexBuffer indices, int startIdx, int count, int indexOffset) {
             OpenGLVertexBuffer vertexBuf = (OpenGLVertexBuffer) vertices;
             OpenGLIndexBuffer indexBuf = (OpenGLIndexBuffer) indices;
 
@@ -242,7 +242,7 @@ public final class OpenGLRenderer implements Renderer {
 
             glBindVertexArray(vertexBuf.getVAO());
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuf.getId());
-            glDrawElements(indexBuf.getGlPrimType(), count, GL_UNSIGNED_INT, startIdx * SizeOf.INT);
+            glDrawElementsBaseVertex(indexBuf.getGlPrimType(), count, GL_UNSIGNED_INT, startIdx * SizeOf.INT, indexOffset);
         }
 
         @Override
