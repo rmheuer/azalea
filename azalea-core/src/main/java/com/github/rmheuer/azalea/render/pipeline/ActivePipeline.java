@@ -33,10 +33,34 @@ public interface ActivePipeline extends SafeCloseable {
      * Renders a buffer of vertices to the current framebuffer, using the bound
      * textures. The vertices in the buffer will be processed in order.
      *
-     * @param vertices buffer containing vertices to render.
+     * @param vertices buffer containing vertices to render
+     * @param primType type of primitives to combine vertices into
+     * @param startIdx index to start at within the vertex buffer
+     * @param count number of vertices starting at {@code startIdx} to render
+     */
+    void draw(VertexBuffer vertices, PrimitiveType primType, int startIdx, int count);
+
+    /**
+     * Renders a mesh to the current framebuffer, using the bound textures. The
+     * vertices will be processed in the order defined by the index buffer.
+     *
+     * @param vertices vertices to render, referenced by the indices
+     * @param indices indices into the vertex buffer to draw
+     * @param startIdx index to start at within the index buffer
+     * @param count number of indices starting at {@code startIdx} to render
+     */
+    void draw(VertexBuffer vertices, IndexBuffer indices, int startIdx, int count);
+
+    /**
+     * Renders a buffer of vertices to the current framebuffer, using the bound
+     * textures. The vertices in the buffer will be processed in order.
+     *
+     * @param vertices buffer containing vertices to render
      * @param primType type of primitives to combine vertices into
      */
-    void draw(VertexBuffer vertices, PrimitiveType primType);
+    default void draw(VertexBuffer vertices, PrimitiveType primType) {
+        draw(vertices, primType, 0, vertices.getVertexCount());
+    }
 
     /**
      * Renders a mesh to the current framebuffer, using the bound textures. The
@@ -45,7 +69,9 @@ public interface ActivePipeline extends SafeCloseable {
      * @param vertices vertices to render, referenced by the indices
      * @param indices indices into the vertex buffer to draw
      */
-    void draw(VertexBuffer vertices, IndexBuffer indices);
+    default void draw(VertexBuffer vertices, IndexBuffer indices) {
+        draw(vertices, indices, 0, indices.getIndexCount());
+    }
 
     /**
      * Renders a mesh to the current framebuffer, using the bound textures.

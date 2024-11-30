@@ -43,6 +43,7 @@ public final class OpenGLIndexBuffer extends OpenGLBuffer implements IndexBuffer
         return primType;
     }
 
+    @Override
     public int getIndexCount() {
         return indexCount;
     }

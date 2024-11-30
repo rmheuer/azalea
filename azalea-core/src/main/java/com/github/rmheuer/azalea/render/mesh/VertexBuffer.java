@@ -16,4 +16,6 @@ public interface VertexBuffer extends SafeCloseable {
     }
 
     boolean hasData();
+
+    int getVertexCount();
 }

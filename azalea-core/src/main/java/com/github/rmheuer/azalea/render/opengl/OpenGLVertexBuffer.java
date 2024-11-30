@@ -68,6 +68,7 @@ public final class OpenGLVertexBuffer extends OpenGLBuffer implements VertexBuff
         return vao;
     }
 
+    @Override
     public int getVertexCount() {
         return vertexCount;
     }

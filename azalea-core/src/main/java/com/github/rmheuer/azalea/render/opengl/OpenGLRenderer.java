@@ -17,6 +17,7 @@ import com.github.rmheuer.azalea.render.shader.ShaderUniform;
 import com.github.rmheuer.azalea.render.texture.Texture;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
 import com.github.rmheuer.azalea.render.texture.TextureCubeMap;
+import com.github.rmheuer.azalea.utils.SizeOf;
 import org.joml.Vector2i;
 
 import static org.lwjgl.opengl.GL33C.*;
@@ -216,21 +217,32 @@ public final class OpenGLRenderer implements Renderer {
         }
 
         @Override
-        public void draw(VertexBuffer vertices, PrimitiveType primType) {
+        public void draw(VertexBuffer vertices, PrimitiveType primType, int startIdx, int count) {
             OpenGLVertexBuffer vertexBuf = (OpenGLVertexBuffer) vertices;
+            int vertexCount = vertexBuf.getVertexCount();
+            if (startIdx >= vertexCount)
+                throw new IndexOutOfBoundsException("Start index out of bounds: " + startIdx + " >= " + vertexCount);
+            if (startIdx + count > vertexCount)
+                throw new IndexOutOfBoundsException("Buffer overflow: " + (startIdx + count) + " > " + vertexCount);
             
             glBindVertexArray(vertexBuf.getVAO());
-            glDrawArrays(getGlPrimitiveType(primType), 0, vertexBuf.getVertexCount());
+            glDrawArrays(getGlPrimitiveType(primType), startIdx, count);
         }
 
         @Override
-        public void draw(VertexBuffer vertices, IndexBuffer indices) {
+        public void draw(VertexBuffer vertices, IndexBuffer indices, int startIdx, int count) {
             OpenGLVertexBuffer vertexBuf = (OpenGLVertexBuffer) vertices;
             OpenGLIndexBuffer indexBuf = (OpenGLIndexBuffer) indices;
 
+            int indexCount = indexBuf.getIndexCount();
+            if (startIdx >= indexCount)
+                throw new IndexOutOfBoundsException("Start index out of bounds: " + startIdx + " >= " + indexCount);
+            if (startIdx + count > indexCount)
+                throw new IndexOutOfBoundsException("Buffer overflow: " + (startIdx + count) + " > " + indexCount);
+
             glBindVertexArray(vertexBuf.getVAO());
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuf.getId());
-            glDrawElements(indexBuf.getGlPrimType(), indexBuf.getIndexCount(), GL_UNSIGNED_INT, 0L);
+            glDrawElements(indexBuf.getGlPrimType(), count, GL_UNSIGNED_INT, startIdx * SizeOf.INT);
         }
 
         @Override
