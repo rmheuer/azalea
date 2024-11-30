@@ -33,6 +33,7 @@ public final class OpenGLIndexBuffer extends OpenGLBuffer implements IndexBuffer
 
     @Override
     public void setData(List<Integer> idxList, PrimitiveType primitiveType, DataUsage usage) {
+        format = GL_UNSIGNED_INT;
         primType = OpenGLRenderer.getGlPrimitiveType(primitiveType);
 
         indexCount = idxList.size();

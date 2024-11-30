@@ -240,13 +240,14 @@ public final class OpenGLRenderer implements Renderer {
             if (startIdx + count > indexCount)
                 throw new IndexOutOfBoundsException("Buffer overflow: " + (startIdx + count) + " > " + indexCount);
 
+            int format = indexBuf.getGlFormat();
             glBindVertexArray(vertexBuf.getVAO());
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuf.getId());
             glDrawElementsBaseVertex(
                     indexBuf.getGlPrimType(),
                     count,
                     indexBuf.getGlFormat(),
-                    startIdx * SizeOf.INT,
+                    startIdx * (format == GL_UNSIGNED_INT ? SizeOf.INT : SizeOf.SHORT),
                     indexOffset
             );
         }

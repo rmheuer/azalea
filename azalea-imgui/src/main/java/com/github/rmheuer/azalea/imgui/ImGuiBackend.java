@@ -11,16 +11,15 @@ import com.github.rmheuer.azalea.utils.SafeCloseable;
 import imgui.ImGui;
 import imgui.ImGuiIO;
 import imgui.flag.ImGuiConfigFlags;
-import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
-import org.lwjgl.opengl.GL33C;
 
 /**
  * ImGui backend implementation to render ImGui into an engine window.
  */
 public final class ImGuiBackend implements SafeCloseable {
     private final ImGuiImplGlfw implGlfw;
-    private final ImGuiImplGl3 implGl3;
+    private final ImGuiRenderBackend renderBackend;
+    private final FrameTextures frameTextures;
     private final Keyboard maskedKeyboard;
 
     /**
@@ -32,7 +31,6 @@ public final class ImGuiBackend implements SafeCloseable {
         eventBus.addListener(MouseEvent.class, EventPriority.FIRST, this::onMouseEvent);
 
         implGlfw = new ImGuiImplGlfw();
-        implGl3 = new ImGuiImplGl3();
 
         // For now, just assume we're running OpenGL so we can use the provided
         // backend implementation
@@ -44,8 +42,9 @@ public final class ImGuiBackend implements SafeCloseable {
         io.addConfigFlags(ImGuiConfigFlags.DockingEnable);
         ImGui.styleColorsDark();
 
+        frameTextures = new FrameTextures();
         implGlfw.init(windowHandle, true);
-        implGl3.init();
+        renderBackend = new ImGuiRenderBackend(window.getRenderer(), frameTextures);
 
         Keyboard winKb = window.getKeyboard();
         maskedKeyboard = (key) -> !ImGui.getIO().getWantCaptureKeyboard() && winKb.isKeyPressed(key);
@@ -64,13 +63,13 @@ public final class ImGuiBackend implements SafeCloseable {
 
     public void beginFrame() {
         implGlfw.newFrame();
+        frameTextures.newFrame();
         ImGui.newFrame();
     }
 
     public void endFrameAndRender() {
         ImGui.render();
-        GL33C.glPolygonMode(GL33C.GL_FRONT_AND_BACK, GL33C.GL_FILL);
-        implGl3.renderDrawData(ImGui.getDrawData());
+        renderBackend.renderDrawData(ImGui.getDrawData());
     }
 
     /**
@@ -84,7 +83,7 @@ public final class ImGuiBackend implements SafeCloseable {
 
     @Override
     public void close() {
-        implGl3.dispose();
+        renderBackend.close();
         implGlfw.dispose();
         ImGui.destroyContext();
     }
