@@ -242,7 +242,13 @@ public final class OpenGLRenderer implements Renderer {
 
             glBindVertexArray(vertexBuf.getVAO());
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuf.getId());
-            glDrawElementsBaseVertex(indexBuf.getGlPrimType(), count, GL_UNSIGNED_INT, startIdx * SizeOf.INT, indexOffset);
+            glDrawElementsBaseVertex(
+                    indexBuf.getGlPrimType(),
+                    count,
+                    indexBuf.getGlFormat(),
+                    startIdx * SizeOf.INT,
+                    indexOffset
+            );
         }
 
         @Override
