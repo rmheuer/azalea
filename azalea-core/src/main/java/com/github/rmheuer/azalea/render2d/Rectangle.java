@@ -205,18 +205,22 @@ public final class Rectangle {
      * rectangle and another.
      *
      * @param r rectangle to intersect with
-     * @return intersected rectangle, or {@code null} if they don't intersect
+     * @param out destination for intersected rectangle
+     * @return whether the two rectangles actually intersect
      */
-    public Rectangle intersect(Rectangle r) {
+    public boolean intersect(Rectangle r, Rectangle out) {
         float minX = Math.max(min.x, r.min.x);
         float minY = Math.max(min.y, r.min.y);
         float maxX = Math.min(max.x, r.max.x);
         float maxY = Math.min(max.y, r.max.y);
 
-        if (maxX > minX && maxY > minY)
-            return new Rectangle(minX, minY, maxX, maxY);
-        else
-            return null;
+        if (maxX > minX && maxY > minY) {
+            out.min.set(minX, minY);
+            out.max.set(maxX, maxY);
+            return true;
+        }
+
+        return false;
     }
 
     /**
