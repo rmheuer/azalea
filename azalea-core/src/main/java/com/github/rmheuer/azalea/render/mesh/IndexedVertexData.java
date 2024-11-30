@@ -13,6 +13,7 @@ import java.util.List;
  * GPU. All add methods throw {@code IllegalStateException} if they are the
  * wrong type for the vertex layout.
  */
+// TODO: Change so indices are stored in ByteBuffer
 public final class IndexedVertexData implements SafeCloseable {
     private final VertexData vertices;
     private final List<Integer> indices;

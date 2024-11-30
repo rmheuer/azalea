@@ -2,8 +2,10 @@ package com.github.rmheuer.azalea.render.mesh;
 
 import com.github.rmheuer.azalea.utils.SafeCloseable;
 import com.github.rmheuer.azalea.utils.SizeOf;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.List;
 
 public interface IndexBuffer extends SafeCloseable {
@@ -24,9 +26,16 @@ public interface IndexBuffer extends SafeCloseable {
 
     void setData(ByteBuffer data, IndexFormat format, PrimitiveType primType, DataUsage usage);
 
-    // TODO: Change IndexedVertexData so indices are stored in ByteBuffer
-    @Deprecated
-    void setData(List<Integer> indices, PrimitiveType primType, DataUsage usage);
+    default void setData(List<Integer> indices, PrimitiveType primType, DataUsage usage) {
+        ByteBuffer buf = MemoryUtil.memAlloc(indices.size() * SizeOf.INT);
+        for (int i : indices)
+            buf.putInt(i);
+        buf.flip();
+
+        setData(buf, IndexFormat.UNSIGNED_INT, primType, usage);
+
+        MemoryUtil.memFree(buf);
+    }
 
     default void setDataFrom(IndexedVertexData data, DataUsage usage) {
         setData(data.getIndices(), data.getPrimitiveType(), usage);
