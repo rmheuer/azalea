@@ -2,6 +2,7 @@ package com.github.rmheuer.azalea.render.opengl;
 
 import com.github.rmheuer.azalea.render.mesh.DataUsage;
 import com.github.rmheuer.azalea.render.mesh.IndexBuffer;
+import com.github.rmheuer.azalea.render.mesh.IndexFormat;
 import com.github.rmheuer.azalea.render.mesh.PrimitiveType;
 import org.lwjgl.system.MemoryUtil;
 

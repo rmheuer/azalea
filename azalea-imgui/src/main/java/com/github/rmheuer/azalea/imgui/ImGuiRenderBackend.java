@@ -114,7 +114,7 @@ public final class ImGuiRenderBackend implements SafeCloseable {
                 vertexBuffer.setData(drawData.getCmdListVtxBufferData(cmdListIdx), VERTEX_LAYOUT, DataUsage.STREAM);
                 indexBuffer.setData(
                         drawData.getCmdListIdxBufferData(cmdListIdx),
-                        IndexBuffer.IndexFormat.UNSIGNED_SHORT,
+                        IndexFormat.UNSIGNED_SHORT,
                         PrimitiveType.TRIANGLES,
                         DataUsage.STREAM
                 );

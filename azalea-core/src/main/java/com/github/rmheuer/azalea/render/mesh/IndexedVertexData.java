@@ -5,30 +5,36 @@ import org.joml.Vector2fc;
 import org.joml.Vector3fc;
 import org.joml.Vector4fc;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Represents a collection of both vertex and index array data to upload to the
  * GPU. All add methods throw {@code IllegalStateException} if they are the
  * wrong type for the vertex layout.
  */
-// TODO: Change so indices are stored in ByteBuffer
 public final class IndexedVertexData implements SafeCloseable {
     private final VertexData vertices;
-    private final List<Integer> indices;
-    private final PrimitiveType primitiveType;
+    private final IndexData indices;
+
+    /**
+     * Creates a new data buffer with the specified layout and
+     * {@link IndexFormat#UNSIGNED_INT} index format.
+     *
+     * @param layout layout of the vertex data
+     * @param primitiveType type of primitive to render
+     */
+    public IndexedVertexData(VertexLayout layout, PrimitiveType primitiveType) {
+        this(layout, primitiveType, IndexFormat.UNSIGNED_INT);
+    }
 
     /**
      * Creates a new data buffer with the specified layout.
      *
      * @param layout layout of the vertex data
      * @param primitiveType type of primitive to render
+     * @param indexFormat format to store indices in
      */
-    public IndexedVertexData(VertexLayout layout, PrimitiveType primitiveType) {
+    public IndexedVertexData(VertexLayout layout, PrimitiveType primitiveType, IndexFormat indexFormat) {
         vertices = new VertexData(layout);
-        indices = new ArrayList<>();
-        this.primitiveType = primitiveType;
+        indices = new IndexData(primitiveType, indexFormat);
     }
 
     /**
@@ -39,7 +45,7 @@ public final class IndexedVertexData implements SafeCloseable {
      * @param i index to add
      */
     public void index(int i) {
-        indices.add(vertices.getVertexCount() + i);
+        indices.putIndex(vertices.getVertexCount() + i);
     }
 
     /**
@@ -49,7 +55,7 @@ public final class IndexedVertexData implements SafeCloseable {
      * @param i index to add
      */
     public void indexAbsolute(int i) {
-        indices.add(i);
+        indices.putIndex(i);
     }
 
     /**
@@ -61,9 +67,7 @@ public final class IndexedVertexData implements SafeCloseable {
      */
     public void indices(int... indices) {
         int base = vertices.getVertexCount();
-        for (int i : indices) {
-            this.indices.add(base + i);
-        }
+        this.indices.putIndicesOffset(base, indices);
     }
 
     /**
@@ -73,9 +77,7 @@ public final class IndexedVertexData implements SafeCloseable {
      * @param indices indices to add
      */
     public void indicesAbsolute(int... indices) {
-        for (int i : indices) {
-            this.indices.add(i);
-        }
+        this.indices.putIndices(indices);
     }
 
     /**
@@ -87,9 +89,7 @@ public final class IndexedVertexData implements SafeCloseable {
     public void append(IndexedVertexData other) {
         int base = vertices.getVertexCount();
         vertices.append(other.vertices);
-        for (int i : other.indices) {
-            indices.add(base + i);
-        }
+        indices.append(other.indices, base);
     }
 
     /**
@@ -97,6 +97,7 @@ public final class IndexedVertexData implements SafeCloseable {
      */
     public void finish() {
         vertices.finish();
+        indices.finish();
     }
 
     /**
@@ -109,26 +110,27 @@ public final class IndexedVertexData implements SafeCloseable {
     }
 
     /**
-     * Gets the list of indices stored in this buffer.
+     * Gets the index data stored in this buffer.
      *
      * @return indices
      */
-    public List<Integer> getIndices() {
+    public IndexData getIndices() {
         return indices;
-    }
-
-    /**
-     * Gets the primitive type the vertices should be rendered as.
-     *
-     * @return primitive type
-     */
-    public PrimitiveType getPrimitiveType() {
-        return primitiveType;
     }
 
     @Override
     public void close() {
         vertices.close();
+        indices.close();
+    }
+
+    /**
+     * Reserves memory for at least the amount of indices specified.
+     *
+     * @param additionalIndices number of additional indices to allocate
+     */
+    public void reserveIndices(int additionalIndices) {
+        indices.reserve(additionalIndices);
     }
 
     // -----------------------------------------------------------
@@ -138,7 +140,7 @@ public final class IndexedVertexData implements SafeCloseable {
      *
      * @param additionalVertices number of additional vertices to allocate
      */
-    public void reserve(int additionalVertices) {
+    public void reserveVertices(int additionalVertices) {
         vertices.reserve(additionalVertices);
     }
 

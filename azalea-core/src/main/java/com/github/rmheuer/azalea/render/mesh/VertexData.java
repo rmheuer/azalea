@@ -11,12 +11,12 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
- * Represents a collection of vertex array data to upload to the GPU. All add
+ * Represents a collection of vertex array data to upload to the GPU. All put
  * methods throw {@code IllegalStateException} if they are the wrong type for
  * the vertex layout.
  */
 public final class VertexData implements SafeCloseable {
-    private static final int INITIAL_CAPACITY = 16;
+    private static final int INITIAL_CAPACITY = 512;
     private static final boolean IS_LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
 
     private final VertexLayout layout;
@@ -60,6 +60,8 @@ public final class VertexData implements SafeCloseable {
      * @param additionalVertices number of additional vertices to allocate
      */
     public void reserve(int additionalVertices) {
+        if (finished)
+            throw new IllegalStateException("Data is finished");
         if (layoutElemIdx != 0)
             throw new IllegalStateException("Can only reserve space between vertices");
 
@@ -67,6 +69,8 @@ public final class VertexData implements SafeCloseable {
     }
 
     private void prepare(AttribType type) {
+        if (finished)
+            throw new IllegalStateException("Data is finished");
         if (layoutElemIdx == 0)
             ensureSpace(layout.sizeOf());
 
@@ -140,6 +144,8 @@ public final class VertexData implements SafeCloseable {
      * @param other mesh data to append
      */
     public void append(VertexData other) {
+        if (finished)
+            throw new IllegalStateException("Data is finished");
         if (!layout.equals(other.layout))
             throw new IllegalArgumentException("Can only append data with same layout");
 
