@@ -5,7 +5,7 @@ import com.github.rmheuer.azalea.render.Colors;
 import com.github.rmheuer.azalea.render.framebuffer.Framebuffer;
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.mesh.DataUsage;
-import com.github.rmheuer.azalea.render.mesh.IndexedVertexData;
+import com.github.rmheuer.azalea.render.mesh.MeshData;
 import com.github.rmheuer.azalea.render.mesh.Mesh;
 import com.github.rmheuer.azalea.render.pipeline.ActivePipeline;
 import com.github.rmheuer.azalea.render.pipeline.PipelineInfo;
@@ -73,7 +73,7 @@ public final class Renderer2D implements SafeCloseable {
             }
         }
 
-        try (IndexedVertexData data = batch.getData()) {
+        try (MeshData data = batch.getData()) {
             mesh.setData(data, DataUsage.DYNAMIC);
         }
         pipeline.draw(mesh);

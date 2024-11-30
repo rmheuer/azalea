@@ -11,7 +11,7 @@ public interface VertexBuffer extends SafeCloseable {
         setData(data.getVertexBuf(), data.getLayout(), usage);
     }
 
-    default void setDataFrom(IndexedVertexData data, DataUsage usage) {
+    default void setDataFrom(MeshData data, DataUsage usage) {
         setData(data.getVertices(), usage);
     }
 

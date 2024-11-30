@@ -1,7 +1,7 @@
 package com.github.rmheuer.azalea.render2d;
 
 import com.github.rmheuer.azalea.render.mesh.AttribType;
-import com.github.rmheuer.azalea.render.mesh.IndexedVertexData;
+import com.github.rmheuer.azalea.render.mesh.MeshData;
 import com.github.rmheuer.azalea.render.mesh.PrimitiveType;
 import com.github.rmheuer.azalea.render.mesh.VertexLayout;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
@@ -24,14 +24,14 @@ final class VertexBatch {
     );
 
     private final Texture2D[] textures;
-    private final IndexedVertexData data;
+    private final MeshData data;
 
     /**
      * Creates a new empty batch.
      */
     public VertexBatch() {
         textures = new Texture2D[Renderer2D.MAX_TEXTURE_SLOTS];
-        data = new IndexedVertexData(LAYOUT, PrimitiveType.TRIANGLES);
+        data = new MeshData(LAYOUT, PrimitiveType.TRIANGLES);
     }
 
     /**
@@ -109,7 +109,7 @@ final class VertexBatch {
      *
      * @return generated data
      */
-    public IndexedVertexData getData() {
+    public MeshData getData() {
         return data;
     }
 }

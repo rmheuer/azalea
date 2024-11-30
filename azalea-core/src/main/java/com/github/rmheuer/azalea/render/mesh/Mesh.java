@@ -12,7 +12,7 @@ public final class Mesh implements SafeCloseable {
         this.indexBuffer = indexBuffer;
     }
 
-    public void setData(IndexedVertexData data, DataUsage usage) {
+    public void setData(MeshData data, DataUsage usage) {
         vertexBuffer.setData(data.getVertices(), usage);
         indexBuffer.setDataFrom(data, usage);
     }

@@ -25,7 +25,7 @@ public interface IndexBuffer extends SafeCloseable {
         MemoryUtil.memFree(buf);
     }
 
-    default void setDataFrom(IndexedVertexData data, DataUsage usage) {
+    default void setDataFrom(MeshData data, DataUsage usage) {
         setData(data.getIndices(), usage);
     }
 

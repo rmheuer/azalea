@@ -10,7 +10,7 @@ import org.joml.Vector4fc;
  * GPU. All add methods throw {@code IllegalStateException} if they are the
  * wrong type for the vertex layout.
  */
-public final class IndexedVertexData implements SafeCloseable {
+public final class MeshData implements SafeCloseable {
     private final VertexData vertices;
     private final IndexData indices;
 
@@ -21,7 +21,7 @@ public final class IndexedVertexData implements SafeCloseable {
      * @param layout layout of the vertex data
      * @param primitiveType type of primitive to render
      */
-    public IndexedVertexData(VertexLayout layout, PrimitiveType primitiveType) {
+    public MeshData(VertexLayout layout, PrimitiveType primitiveType) {
         this(layout, primitiveType, IndexFormat.UNSIGNED_INT);
     }
 
@@ -32,7 +32,7 @@ public final class IndexedVertexData implements SafeCloseable {
      * @param primitiveType type of primitive to render
      * @param indexFormat format to store indices in
      */
-    public IndexedVertexData(VertexLayout layout, PrimitiveType primitiveType, IndexFormat indexFormat) {
+    public MeshData(VertexLayout layout, PrimitiveType primitiveType, IndexFormat indexFormat) {
         vertices = new VertexData(layout);
         indices = new IndexData(primitiveType, indexFormat);
     }
@@ -86,7 +86,7 @@ public final class IndexedVertexData implements SafeCloseable {
      *
      * @param other mesh data to append
      */
-    public void append(IndexedVertexData other) {
+    public void append(MeshData other) {
         int base = vertices.getVertexCount();
         vertices.append(other.vertices);
         indices.append(other.indices, base);
