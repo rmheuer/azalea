@@ -11,8 +11,6 @@ import org.joml.Vector3f;
 
 import java.util.*;
 
-// TODO: Add renderer state change functions (clipping, blending), then allow
-//  multiple draw commands for one buffer
 public class DrawList2D {
     private static final int CURVE_PRECISION = 8;
     private static final float[] curveLookup = new float[CURVE_PRECISION * 2 + 2];

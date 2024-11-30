@@ -2,7 +2,6 @@ package com.github.rmheuer.azalea.render2d;
 
 import com.github.rmheuer.azalea.render.texture.Texture2DRegion;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 /**
  * The intermediate representation of vertices in a {@link DrawList2D} before

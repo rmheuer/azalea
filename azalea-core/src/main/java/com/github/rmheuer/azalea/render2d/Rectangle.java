@@ -178,12 +178,13 @@ public final class Rectangle {
     }
 
     /**
-     * Translates the rectangle without changing its size.
+     * Moves the top-left corner of the rectangle to the specified position,
+     * keeping the size the same.
      *
-     * @param x amount to move on X axis
-     * @param y amount to move on Y axis
+     * @param x new top-left corner X
+     * @param y new top-left corner Y
      */
-    public void move(float x, float y) {
+    public void moveTo(float x, float y) {
         max.sub(min).add(x, y);
         min.set(x, y);
     }
@@ -204,15 +205,18 @@ public final class Rectangle {
      * rectangle and another.
      *
      * @param r rectangle to intersect with
-     * @return intersected rectangle
+     * @return intersected rectangle, or {@code null} if they don't intersect
      */
-    // FIXME: I think this is broken somehow, but I don't remember the problem
     public Rectangle intersect(Rectangle r) {
         float minX = Math.max(min.x, r.min.x);
         float minY = Math.max(min.y, r.min.y);
         float maxX = Math.min(max.x, r.max.x);
         float maxY = Math.min(max.y, r.max.y);
-        return new Rectangle(minX, minY, maxX, maxY);
+
+        if (maxX > minX && maxY > minY)
+            return new Rectangle(minX, minY, maxX, maxY);
+        else
+            return null;
     }
 
     /**
