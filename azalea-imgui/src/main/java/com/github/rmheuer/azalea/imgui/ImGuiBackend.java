@@ -30,7 +30,7 @@ public final class ImGuiBackend implements SafeCloseable {
         eventBus.addListener(KeyboardEvent.class, EventPriority.FIRST, this::onKeyboardEvent);
         eventBus.addListener(MouseEvent.class, EventPriority.FIRST, this::onMouseEvent);
 
-        implGlfw = new ImGuiImplGlfw();
+        implGlfw = new ImGuiImplGlfwFix();
 
         // For now, just assume we're running OpenGL so we can use the provided
         // backend implementation
@@ -84,7 +84,7 @@ public final class ImGuiBackend implements SafeCloseable {
     @Override
     public void close() {
         renderBackend.close();
-        implGlfw.dispose();
+        implGlfw.shutdown();
         ImGui.destroyContext();
     }
 }

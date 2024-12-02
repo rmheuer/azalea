@@ -120,7 +120,7 @@ public final class ImGuiRenderBackend implements SafeCloseable {
                 );
 
                 for (int cmdBufferIdx = 0; cmdBufferIdx < drawData.getCmdListCmdBufferSize(cmdListIdx); cmdBufferIdx++) {
-                    drawData.getCmdListCmdBufferClipRect(cmdListIdx, cmdBufferIdx, clipRect);
+                    drawData.getCmdListCmdBufferClipRect(clipRect, cmdListIdx, cmdBufferIdx);
 
                     float clipMinX = (clipRect.x - clipOffX) * clipScaleX;
                     float clipMinY = (clipRect.y - clipOffY) * clipScaleY;
