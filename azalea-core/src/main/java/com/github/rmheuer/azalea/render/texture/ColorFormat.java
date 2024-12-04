@@ -26,7 +26,8 @@ public enum ColorFormat {
 
         @Override
         public void fillBuffer(long dataPtr, int pixelCount, int color) {
-            long twoPixels = (long) color << 32 | color;
+            long colorL = Integer.toUnsignedLong(color);
+            long twoPixels = colorL | (colorL << 32);
             for (int i = 0; i < pixelCount / 2; i++) {
                 MemoryUtil.memPutLong(dataPtr + i * 8, twoPixels);
             }
