@@ -70,6 +70,15 @@ public abstract class OpenGLTexture implements Texture {
         }
     }
 
+    private int getGlInternalFormat(ColorFormat format) {
+        switch (format) {
+            case RGBA: return GL_RGBA8;
+            case GRAYSCALE: return GL_R8;
+            default:
+                throw new IllegalStateException("Unknown color format: " + format);
+        }
+    }
+
     private void setUnpackAlignment(long ptr, int width, ColorFormat format) {
         int rowBytes = width * format.getByteCount();
 
@@ -88,18 +97,36 @@ public abstract class OpenGLTexture implements Texture {
 
     protected void setData(int target, ByteBuffer data, int width, int height, ColorFormat colorFormat) {
         this.colorFormat = colorFormat;
-        int format = getGlFormat(colorFormat);
         setUnpackAlignment(MemoryUtil.memAddressSafe(data), width, colorFormat);
-        glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(
+                target,
+                0,
+                getGlInternalFormat(colorFormat),
+                width,
+                height,
+                0,
+                getGlFormat(colorFormat),
+                GL_UNSIGNED_BYTE,
+                data
+        );
     }
 
     protected void setData(int target, BitmapRegion data) {
         DataPtr ptr = getBitmapData(data);
         colorFormat = data.getColorFormat();
 
-        int format = getGlFormat(colorFormat);
         setUnpackAlignment(ptr.ptr, data.getWidth(), colorFormat);
-        glTexImage2D(target, 0, format, data.getWidth(), data.getHeight(), 0, format, GL_UNSIGNED_BYTE, ptr.ptr);
+        glTexImage2D(
+                target,
+                0,
+                getGlInternalFormat(colorFormat),
+                data.getWidth(),
+                data.getHeight(),
+                0,
+                getGlFormat(colorFormat),
+                GL_UNSIGNED_BYTE,
+                ptr.ptr
+        );
 
         ptr.freeIfOwned();
     }
