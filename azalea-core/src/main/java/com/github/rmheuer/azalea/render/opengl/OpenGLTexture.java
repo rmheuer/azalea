@@ -70,9 +70,26 @@ public abstract class OpenGLTexture implements Texture {
         }
     }
 
+    private void setUnpackAlignment(long ptr, int width, ColorFormat format) {
+        int rowBytes = width * format.getByteCount();
+
+        // Choose the largest alignment that the data matches
+        long mask = ptr | rowBytes;
+        int align;
+        if ((mask & 0b11) == 0)
+            align = 4;
+        else if ((mask & 0b1) == 0)
+            align = 2;
+        else
+            align = 1;
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, align);
+    }
+
     protected void setData(int target, ByteBuffer data, int width, int height, ColorFormat colorFormat) {
         this.colorFormat = colorFormat;
         int format = getGlFormat(colorFormat);
+        setUnpackAlignment(MemoryUtil.memAddressSafe(data), width, colorFormat);
         glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     }
 
@@ -81,6 +98,7 @@ public abstract class OpenGLTexture implements Texture {
         colorFormat = data.getColorFormat();
 
         int format = getGlFormat(colorFormat);
+        setUnpackAlignment(ptr.ptr, data.getWidth(), colorFormat);
         glTexImage2D(target, 0, format, data.getWidth(), data.getHeight(), 0, format, GL_UNSIGNED_BYTE, ptr.ptr);
 
         ptr.freeIfOwned();
@@ -93,6 +111,7 @@ public abstract class OpenGLTexture implements Texture {
             throw new IllegalArgumentException("Color format does not match: expected " + this.colorFormat + ", given " + colorFormat);
 
         int format = getGlFormat(colorFormat);
+        setUnpackAlignment(MemoryUtil.memAddressSafe(data), width, colorFormat);
         glTexSubImage2D(target, 0, x, y, width, height, format, GL_UNSIGNED_BYTE, data);
     }
 
@@ -105,6 +124,7 @@ public abstract class OpenGLTexture implements Texture {
 
         DataPtr ptr = getBitmapData(data);
         int format = getGlFormat(colorFormat);
+        setUnpackAlignment(ptr.ptr, data.getWidth(), colorFormat);
         glTexSubImage2D(target, 0, x, y, data.getWidth(), data.getHeight(), format, GL_UNSIGNED_BYTE, ptr.ptr);
 
         ptr.freeIfOwned();
