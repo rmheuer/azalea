@@ -13,11 +13,13 @@ import java.util.List;
 import static org.lwjgl.opengl.GL33C.*;
 
 public final class OpenGLIndexBuffer extends OpenGLBuffer implements IndexBuffer {
+    private final GLStateManager state;
     private int format;
     private int primType;
     private int indexCount;
 
-    public OpenGLIndexBuffer() {
+    public OpenGLIndexBuffer(GLStateManager state) {
+        this.state = state;
         primType = -1;
     }
 
@@ -28,7 +30,7 @@ public final class OpenGLIndexBuffer extends OpenGLBuffer implements IndexBuffer
 
         indexCount = data.remaining() / format.sizeOf();
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+        state.getVertexArrayManager().bindForIndexUpload(id);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, data, getGlUsage(usage));
     }
 
@@ -48,5 +50,11 @@ public final class OpenGLIndexBuffer extends OpenGLBuffer implements IndexBuffer
     @Override
     public int getIndexCount() {
         return indexCount;
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        state.elementArrayBufferDeleted(id);
     }
 }

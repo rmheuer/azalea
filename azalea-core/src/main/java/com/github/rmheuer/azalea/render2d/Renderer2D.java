@@ -23,8 +23,6 @@ import java.util.List;
  * Renderer to render {@code DrawList2D}s.
  */
 public final class Renderer2D implements SafeCloseable {
-    public static final int MAX_TEXTURE_SLOTS = 16;
-
     private static final String VERTEX_SHADER_PATH = "azalea/shaders/render2d/vertex.glsl";
     private static final String FRAGMENT_SHADER_PATH = "azalea/shaders/render2d/fragment.glsl";
 
@@ -56,7 +54,7 @@ public final class Renderer2D implements SafeCloseable {
         }
 
         try (ActivePipeline pipe = renderer.bindPipeline(new PipelineInfo(shader))) {
-            for (int i = 0; i < MAX_TEXTURE_SLOTS; i++) {
+            for (int i = 0; i < Renderer.MAX_TEXTURE_SLOTS; i++) {
                 pipe.getUniform("u_Textures[" + i + "]").setInt(i);
             }
         }
@@ -66,7 +64,7 @@ public final class Renderer2D implements SafeCloseable {
 
     private void drawBatch(ActivePipeline pipeline, VertexBatch batch) {
         Texture2D[] textures = batch.getTextures();
-        for (int i = 0; i < MAX_TEXTURE_SLOTS; i++) {
+        for (int i = 0; i < Renderer.MAX_TEXTURE_SLOTS; i++) {
             Texture2D tex = textures[i];
             if (tex != null) {
                 pipeline.bindTexture(i, tex);

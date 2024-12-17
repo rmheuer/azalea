@@ -23,10 +23,16 @@ import org.joml.Vector2i;
 import static org.lwjgl.opengl.GL33C.*;
 
 public final class OpenGLRenderer implements Renderer {
+    private final GLStateManager state;
     private boolean pipelineActive = false;
+
     private final Framebuffer defaultFramebuffer;
 
     public OpenGLRenderer(OpenGLWindow window) {
+        Vector2i size = window.getFramebufferSize();
+        state = new GLStateManager(size);
+        setClipRect(0, 0, size.x, size.y);
+
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
         defaultFramebuffer = new Framebuffer() {
             @Override
@@ -44,19 +50,16 @@ public final class OpenGLRenderer implements Renderer {
                 throw new UnsupportedOperationException("Cannot close default framebuffer");
             }
         };
-
-        Vector2i size = window.getFramebufferSize();
-        setClipRect(0, 0, size.x, size.y);
     }
 
     @Override
     public void setClipRect(int x, int y, int w, int h) {
-        glScissor(x, y, w, h);
+        state.setClipRect(x, y, w, h);
     }
 
     @Override
     public void setClearColor(int colorRGBA) {
-        glClearColor(
+        state.setClearColor(
                 Colors.RGBA.getRed(colorRGBA) / 255.0f,
                 Colors.RGBA.getGreen(colorRGBA) / 255.0f,
                 Colors.RGBA.getBlue(colorRGBA) / 255.0f,
@@ -81,13 +84,6 @@ public final class OpenGLRenderer implements Renderer {
         glClear(bits);
     }
 
-    private void setEnabled(int feature, boolean enabled) {
-        if (enabled)
-            glEnable(feature);
-        else
-            glDisable(feature);
-    }
-
     @Override
     public ActivePipeline bindPipeline(PipelineInfo pipeline, Framebuffer framebuffer) {
         if (pipelineActive)
@@ -95,7 +91,7 @@ public final class OpenGLRenderer implements Renderer {
         pipelineActive = true;
 
         if (framebuffer == defaultFramebuffer) {
-            glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
+            state.bindFramebuffer(0);
         } else {
             ((OpenGLFramebuffer) framebuffer).bind();
         }
@@ -105,16 +101,14 @@ public final class OpenGLRenderer implements Renderer {
         OpenGLShaderProgram shader = (OpenGLShaderProgram) pipeline.getShader();
         shader.bind();
 
-        setEnabled(GL_BLEND, pipeline.isBlend());
-        if (pipeline.isBlend())
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        boolean blend = pipeline.isBlend();
+        state.setBlendEnabled(blend);
+        if (blend)
+            state.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        setEnabled(GL_SCISSOR_TEST, pipeline.isClip());
+        state.setScissorEnabled(pipeline.isClip());
 
-        boolean depthTest = pipeline.isDepthTest();
-        if (depthTest) {
-            glEnable(GL_DEPTH_TEST);
-
+        if (pipeline.isDepthTest()) {
             int func;
             switch (pipeline.getDepthFunc()) {
                 case NEVER: func = GL_NEVER; break;
@@ -127,20 +121,21 @@ public final class OpenGLRenderer implements Renderer {
                 case ALWAYS: func = GL_ALWAYS; break;
                 default: throw new IllegalArgumentException("Unknown depth function: " + pipeline.getDepthFunc());
             }
-            glDepthFunc(func);
+            state.setDepthTestEnabled(true);
+            state.setDepthFunc(func);
         } else {
-            glDisable(GL_DEPTH_TEST);
+            state.setDepthTestEnabled(false);
         }
 
         if (pipeline.getCullMode() == CullMode.OFF) {
-            glDisable(GL_CULL_FACE);
+            state.setCullFaceEnabled(false);
         } else {
-            glEnable(GL_CULL_FACE);
-            glCullFace(pipeline.getCullMode() == CullMode.FRONT ? GL_FRONT : GL_BACK);
-            glFrontFace(pipeline.getWinding() == FaceWinding.CW_FRONT ? GL_CW : GL_CCW);
+            state.setCullFaceEnabled(true);
+            state.setCullFace(pipeline.getCullMode() == CullMode.FRONT ? GL_FRONT : GL_BACK);
+            state.setFrontFace(pipeline.getWinding() == FaceWinding.CW_FRONT ? GL_CW : GL_CCW);
         }
 
-        glPolygonMode(GL_FRONT_AND_BACK, pipeline.getFillMode() == FillMode.FILLED ? GL_FILL : GL_LINE);
+        state.setPolygonMode(pipeline.getFillMode() == FillMode.FILLED ? GL_FILL : GL_LINE);
 
         return new ActivePipelineImpl(shader);
     }
@@ -152,27 +147,27 @@ public final class OpenGLRenderer implements Renderer {
 
     @Override
     public ShaderProgram createShaderProgram(ShaderStage... stages) {
-        return new OpenGLShaderProgram(stages);
+        return new OpenGLShaderProgram(state, stages);
     }
 
     @Override
     public VertexBuffer createVertexBuffer() {
-        return new OpenGLVertexBuffer();
+        return new OpenGLVertexBuffer(state);
     }
 
     @Override
     public IndexBuffer createIndexBuffer() {
-        return new OpenGLIndexBuffer();
+        return new OpenGLIndexBuffer(state);
     }
 
     @Override
     public Texture2D createTexture2D() {
-        return new OpenGLTexture2D();
+        return new OpenGLTexture2D(state);
     }
 
     @Override
     public TextureCubeMap createTextureCubeMap() {
-        return new OpenGLTextureCubeMap();
+        return new OpenGLTextureCubeMap(state);
     }
 
     @Override
@@ -182,7 +177,7 @@ public final class OpenGLRenderer implements Renderer {
 
     @Override
     public FramebufferBuilder createFramebufferBuilder(int width, int height) {
-        return new OpenGLFramebufferBuilder(width, height);
+        return new OpenGLFramebufferBuilder(state, width, height);
     }
     
     public static int getGlPrimitiveType(PrimitiveType primitiveType) {
@@ -197,6 +192,11 @@ public final class OpenGLRenderer implements Renderer {
             default:
                 throw new IllegalArgumentException("Unknown primitive type: " + primitiveType);
         }
+    }
+
+    @Override
+    public void close() {
+        state.close();
     }
 
     private final class ActivePipelineImpl implements ActivePipeline {
@@ -224,8 +224,8 @@ public final class OpenGLRenderer implements Renderer {
                 throw new IndexOutOfBoundsException("Start index out of bounds: " + startIdx + " >= " + vertexCount);
             if (startIdx + count > vertexCount)
                 throw new IndexOutOfBoundsException("Buffer overflow: " + (startIdx + count) + " > " + vertexCount);
-            
-            glBindVertexArray(vertexBuf.getVAO());
+
+            state.getVertexArrayManager().bindForDrawing(vertexBuf.getId(), 0, vertexBuf.getDataLayout());
             glDrawArrays(getGlPrimitiveType(primType), startIdx, count);
         }
 
@@ -241,13 +241,16 @@ public final class OpenGLRenderer implements Renderer {
                 throw new IndexOutOfBoundsException("Buffer overflow: " + (startIdx + count) + " > " + indexCount);
 
             int format = indexBuf.getGlFormat();
-            glBindVertexArray(vertexBuf.getVAO());
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuf.getId());
+            state.getVertexArrayManager().bindForDrawing(
+                    vertexBuf.getId(),
+                    indexBuf.getId(),
+                    vertexBuf.getDataLayout()
+            );
             glDrawElementsBaseVertex(
                     indexBuf.getGlPrimType(),
                     count,
                     indexBuf.getGlFormat(),
-                    startIdx * (format == GL_UNSIGNED_INT ? SizeOf.INT : SizeOf.SHORT),
+                    (long) startIdx * (format == GL_UNSIGNED_INT ? SizeOf.INT : SizeOf.SHORT),
                     indexOffset
             );
         }

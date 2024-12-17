@@ -9,13 +9,15 @@ import java.util.Map;
 import static org.lwjgl.opengl.GL33C.*;
 
 public final class OpenGLFramebuffer implements Framebuffer {
+    private final GLStateManager state;
     private final int id;
     private final Map<Integer, OpenGLTexture2D> colorTextures;
     private final int[] rboIds;
 
     private final int width, height;
 
-    public OpenGLFramebuffer(int id, Map<Integer, OpenGLTexture2D> colorTextures, int[] rboIds, int width, int height) {
+    public OpenGLFramebuffer(GLStateManager state, int id, Map<Integer, OpenGLTexture2D> colorTextures, int[] rboIds, int width, int height) {
+        this.state = state;
         this.id = id;
         this.colorTextures = colorTextures;
         this.rboIds = rboIds;
@@ -24,7 +26,7 @@ public final class OpenGLFramebuffer implements Framebuffer {
     }
 
     public void bind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, id);
+        state.bindFramebuffer(id);
     }
 
     @Override
@@ -40,6 +42,8 @@ public final class OpenGLFramebuffer implements Framebuffer {
     @Override
     public void close() {
         glDeleteFramebuffers(id);
+        state.framebufferDeleted(id);
+
         for (OpenGLTexture2D texture : colorTextures.values()) {
             texture.close();
         }

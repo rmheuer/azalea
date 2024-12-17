@@ -8,10 +8,12 @@ import java.nio.ByteBuffer;
 import static org.lwjgl.opengl.GL33C.*;
 
 public abstract class OpenGLTexture implements Texture {
+    protected final GLStateManager state;
     protected final int id;
     private ColorFormat colorFormat;
 
-    public OpenGLTexture() {
+    public OpenGLTexture(GLStateManager state) {
+        this.state = state;
         id = glGenTextures();
         colorFormat = null;
     }
@@ -41,7 +43,7 @@ public abstract class OpenGLTexture implements Texture {
             return new DataPtr(srcPtr, false);
         }
 
-        // Data is a sub-region, copy out the region to a new buffer
+        // Data is a subregion, copy out the region to a new buffer
 
         ColorFormat format = data.getColorFormat();
         int byteCount = format.getByteCount();
@@ -92,7 +94,7 @@ public abstract class OpenGLTexture implements Texture {
         else
             align = 1;
 
-        glPixelStorei(GL_UNPACK_ALIGNMENT, align);
+        state.setPixelUnpackAlignment(align);
     }
 
     protected void setData(int target, ByteBuffer data, int width, int height, ColorFormat colorFormat) {
@@ -189,13 +191,14 @@ public abstract class OpenGLTexture implements Texture {
     }
 
     public void bind(int slot) {
-        glActiveTexture(GL_TEXTURE0 + slot);
+        state.setActiveTexture(slot);
         bindToTarget();
     }
 
     @Override
     public void close() {
         glDeleteTextures(id);
+        state.textureDeleted(id);
     }
 
     public int getId() {

@@ -34,4 +34,10 @@ public final class OpenGLWindow extends GlfwWindow {
     public Renderer getRenderer() {
         return renderer;
     }
+
+    @Override
+    public void close() {
+        renderer.close();
+        super.close();
+    }
 }

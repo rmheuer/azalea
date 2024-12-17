@@ -13,6 +13,7 @@ import com.github.rmheuer.azalea.render.shader.ShaderStage;
 import com.github.rmheuer.azalea.render.texture.Bitmap;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
 import com.github.rmheuer.azalea.render.texture.TextureCubeMap;
+import com.github.rmheuer.azalea.utils.SafeCloseable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +21,9 @@ import java.io.InputStream;
 /**
  * Represents a renderer used to render into a window.
  */
-public interface Renderer {
+public interface Renderer extends SafeCloseable {
+    int MAX_TEXTURE_SLOTS = 16;
+
     void setClipRect(int x, int y, int w, int h);
 
     /**

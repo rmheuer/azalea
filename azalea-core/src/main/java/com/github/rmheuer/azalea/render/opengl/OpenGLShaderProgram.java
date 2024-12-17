@@ -4,9 +4,6 @@ import com.github.rmheuer.azalea.render.shader.ShaderProgram;
 import com.github.rmheuer.azalea.render.shader.ShaderStage;
 import com.github.rmheuer.azalea.render.shader.ShaderUniform;
 import org.joml.Matrix4fc;
-import org.joml.Vector2fc;
-import org.joml.Vector3fc;
-import org.joml.Vector4fc;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
@@ -16,10 +13,13 @@ import java.util.Map;
 import static org.lwjgl.opengl.GL33C.*;
 
 public final class OpenGLShaderProgram implements ShaderProgram {
+    private final GLStateManager state;
     private final int id;
     private final Map<String, ShaderUniform> uniforms;
 
-    public OpenGLShaderProgram(ShaderStage[] stages) {
+    public OpenGLShaderProgram(GLStateManager state, ShaderStage[] stages) {
+        this.state = state;
+
         id = glCreateProgram();
         for (ShaderStage stage : stages) {
             glAttachShader(id, ((OpenGLShaderStage) stage).getId());
@@ -36,7 +36,7 @@ public final class OpenGLShaderProgram implements ShaderProgram {
     }
 
     public void bind() {
-        glUseProgram(id);
+        state.bindProgram(id);
     }
 
     public ShaderUniform getUniform(String name) {
@@ -49,6 +49,7 @@ public final class OpenGLShaderProgram implements ShaderProgram {
     @Override
     public void close() {
         glDeleteProgram(id);
+        state.programDeleted(id);
     }
 
     private static final class UniformImpl implements ShaderUniform {

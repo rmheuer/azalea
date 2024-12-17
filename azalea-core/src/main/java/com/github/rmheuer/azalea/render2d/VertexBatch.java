@@ -1,5 +1,6 @@
 package com.github.rmheuer.azalea.render2d;
 
+import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.mesh.AttribType;
 import com.github.rmheuer.azalea.render.mesh.MeshData;
 import com.github.rmheuer.azalea.render.mesh.PrimitiveType;
@@ -30,7 +31,7 @@ final class VertexBatch {
      * Creates a new empty batch.
      */
     public VertexBatch() {
-        textures = new Texture2D[Renderer2D.MAX_TEXTURE_SLOTS];
+        textures = new Texture2D[Renderer.MAX_TEXTURE_SLOTS];
         data = new MeshData(LAYOUT, PrimitiveType.TRIANGLES);
     }
 
@@ -51,7 +52,7 @@ final class VertexBatch {
             tex = texSub.getSourceTexture();
 
         int textureSlot = -1;
-        for (int i = 0; i < Renderer2D.MAX_TEXTURE_SLOTS; i++) {
+        for (int i = 0; i < Renderer.MAX_TEXTURE_SLOTS; i++) {
             if (textures[i] == null) {
                 textures[i] = tex;
                 textureSlot = i;
