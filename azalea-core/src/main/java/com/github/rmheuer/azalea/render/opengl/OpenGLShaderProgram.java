@@ -94,6 +94,21 @@ public final class OpenGLShaderProgram implements ShaderProgram {
         }
 
         @Override
+        public void setIvec2(int x, int y) {
+            glUniform2i(location, x, y);
+        }
+
+        @Override
+        public void setIvec3(int x, int y, int z) {
+            glUniform3i(location, x, y, z);
+        }
+
+        @Override
+        public void setIvec4(int x, int y, int z, int w) {
+            glUniform4i(location, x, y, z, w);
+        }
+
+        @Override
         public void setTexture(int slotIdx) {
             glUniform1i(location, slotIdx);
         }
