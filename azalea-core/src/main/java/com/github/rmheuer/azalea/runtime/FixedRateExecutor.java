@@ -63,4 +63,14 @@ public final class FixedRateExecutor {
             unprocessedTime = 0;
         this.enabled = enabled;
     }
+
+    /**
+     * Gets the progress towards the next tick. This starts at 0 immediately
+     * after the tick and increases towards 1 until the next tick.
+     *
+     * @return subtick percentage from 0 to 1
+     */
+    public float getSubtickPercent() {
+        return unprocessedTime / period;
+    }
 }
