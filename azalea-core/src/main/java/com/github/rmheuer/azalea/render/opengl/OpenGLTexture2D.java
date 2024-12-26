@@ -31,39 +31,57 @@ public final class OpenGLTexture2D extends OpenGLTexture implements Texture2D {
     }
 
     @Override
-    public void setData(BitmapRegion data) {
+    public void setMipMapData(int mipLevel, BitmapRegion data) {
         state.bindTexture(GL_TEXTURE_2D, id);
-        setData(GL_TEXTURE_2D, data);
+        setMipMapData(GL_TEXTURE_2D, mipLevel, data);
     }
 
     @Override
-    public void setData(ByteBuffer data, int width, int height, ColorFormat colorFormat) {
+    public void setMipMapData(int mipLevel, ByteBuffer data, int width, int height, ColorFormat colorFormat) {
         state.bindTexture(GL_TEXTURE_2D, id);
-        setData(GL_TEXTURE_2D, data, width, height, colorFormat);
+        setMipMapData(GL_TEXTURE_2D, mipLevel, data, width, height, colorFormat);
     }
 
     @Override
-    public void setSubData(BitmapRegion data, int x, int y) {
+    public void setMipMapSubData(int mipLevel, BitmapRegion data, int x, int y) {
         state.bindTexture(GL_TEXTURE_2D, id);
-        setSubData(GL_TEXTURE_2D, data, x, y);
+        setMipMapSubData(GL_TEXTURE_2D, mipLevel, data, x, y);
     }
 
     @Override
-    public void setSubData(ByteBuffer data, int width, int height, ColorFormat colorFormat, int x, int y) {
+    public void setMipMapSubData(int mipLevel, ByteBuffer data, int width, int height, ColorFormat colorFormat, int x, int y) {
         state.bindTexture(GL_TEXTURE_2D, id);
-        setSubData(GL_TEXTURE_2D, data, width, height, colorFormat, x, y);
+        setMipMapSubData(GL_TEXTURE_2D, mipLevel, data, width, height, colorFormat, x, y);
+    }
+
+    @Override
+    public void generateAllMipMaps() {
+        state.bindTexture(GL_TEXTURE_2D, id);
+        glGenerateMipmap(GL_TEXTURE_2D);
     }
 
     @Override
     public void setMinFilter(Filter minFilter) {
         state.bindTexture(GL_TEXTURE_2D, id);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, getGlFilter(minFilter));
+        setMinFilter(GL_TEXTURE_2D, minFilter);
     }
 
     @Override
     public void setMagFilter(Filter magFilter) {
         state.bindTexture(GL_TEXTURE_2D, id);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, getGlFilter(magFilter));
+    }
+
+    @Override
+    public void setMipMapMode(MipMapMode mode) {
+        state.bindTexture(GL_TEXTURE_2D, id);
+        setMipMapMode(GL_TEXTURE_2D, mode);
+    }
+
+    @Override
+    public void setMipMapRange(int minLevel, int maxLevel) {
+        state.bindTexture(GL_TEXTURE_2D, id);
+        setMipMapRange(GL_TEXTURE_2D, minLevel, maxLevel);
     }
 
     @Override

@@ -37,43 +37,55 @@ public final class OpenGLTextureCubeMap extends OpenGLTexture implements Texture
     @Override
     public void setFaceSize(CubeFace face, int width, int height, ColorFormat colorFormat) {
         state.bindTexture(GL_TEXTURE_CUBE_MAP, id);
-        setData(getGlFace(face), null, width, height, colorFormat);
+        setMipMapData(getGlFace(face), 0, null, width, height, colorFormat);
     }
 
     @Override
     public void setFaceData(CubeFace face, BitmapRegion data) {
         state.bindTexture(GL_TEXTURE_CUBE_MAP, id);
-        setData(getGlFace(face), data);
+        setMipMapData(getGlFace(face), 0, data);
     }
 
     @Override
     public void setFaceData(CubeFace face, ByteBuffer data, int width, int height, ColorFormat colorFormat) {
         state.bindTexture(GL_TEXTURE_CUBE_MAP, id);
-        setData(getGlFace(face), data, width, height, colorFormat);
+        setMipMapData(getGlFace(face), 0, data, width, height, colorFormat);
     }
 
     @Override
     public void setFaceSubData(CubeFace face, BitmapRegion data, int x, int y) {
         state.bindTexture(GL_TEXTURE_CUBE_MAP, id);
-        setSubData(getGlFace(face), data, x, y);
+        setMipMapSubData(getGlFace(face), 0, data, x, y);
     }
 
     @Override
     public void setFaceSubData(CubeFace face, ByteBuffer data, int width, int height, ColorFormat colorFormat, int x, int y) {
         state.bindTexture(GL_TEXTURE_CUBE_MAP, id);
-        setSubData(getGlFace(face), data, width, height, colorFormat, x, y);
+        setMipMapSubData(getGlFace(face), 0, data, width, height, colorFormat, x, y);
     }
 
     @Override
     public void setMinFilter(Filter minFilter) {
         state.bindTexture(GL_TEXTURE_CUBE_MAP, id);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, getGlFilter(minFilter));
+        setMinFilter(GL_TEXTURE_CUBE_MAP, minFilter);
     }
 
     @Override
     public void setMagFilter(Filter magFilter) {
         state.bindTexture(GL_TEXTURE_CUBE_MAP, id);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, getGlFilter(magFilter));
+    }
+
+    @Override
+    public void setMipMapMode(MipMapMode mode) {
+        state.bindTexture(GL_TEXTURE_CUBE_MAP, id);
+        setMipMapMode(GL_TEXTURE_CUBE_MAP, mode);
+    }
+
+    @Override
+    public void setMipMapRange(int minLevel, int maxLevel) {
+        state.bindTexture(GL_TEXTURE_CUBE_MAP, id);
+        setMipMapRange(GL_TEXTURE_CUBE_MAP, minLevel, maxLevel);
     }
 
     @Override

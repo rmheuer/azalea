@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 /**
  * A 2D texture on the GPU.
  */
+// TODO: Docs for mip-maps
 public interface Texture2D extends Texture, Texture2DRegion {
     /**
      * Allocates GPU memory for the specified texture size, without uploading
@@ -23,7 +24,11 @@ public interface Texture2D extends Texture, Texture2DRegion {
      *
      * @param data data to upload
      */
-    void setData(BitmapRegion data);
+    default void setData(BitmapRegion data) {
+        setMipMapData(0, data);
+    }
+
+    void setMipMapData(int mipLevel, BitmapRegion data);
 
     /**
      * Uploads a set of bitmap data to the GPU.
@@ -33,7 +38,11 @@ public interface Texture2D extends Texture, Texture2DRegion {
      * @param height height of the bitmap
      * @param colorFormat format of the bitmap data
      */
-    void setData(ByteBuffer data, int width, int height, ColorFormat colorFormat);
+    default void setData(ByteBuffer data, int width, int height, ColorFormat colorFormat) {
+        setMipMapData(0, data, width, height, colorFormat);
+    }
+
+    void setMipMapData(int mipLevel, ByteBuffer data, int width, int height, ColorFormat colorFormat);
 
     /**
      * Sets a section of the texture data on GPU, leaving the rest the same.
@@ -45,7 +54,11 @@ public interface Texture2D extends Texture, Texture2DRegion {
      * @param x x coordinate to upload into
      * @param y y coordinate to upload into
      */
-    void setSubData(BitmapRegion data, int x, int y);
+    default void setSubData(BitmapRegion data, int x, int y) {
+        setMipMapSubData(0, data, x, y);
+    }
+
+    void setMipMapSubData(int mipLevel, BitmapRegion data, int x, int y);
 
     /**
      * Sets a section of the texture data on GPU, leaving the rest the same.
@@ -60,7 +73,16 @@ public interface Texture2D extends Texture, Texture2DRegion {
      * @param x x coordinate to upload into
      * @param y y coordinate to upload into
      */
-    void setSubData(ByteBuffer data, int width, int height, ColorFormat colorFormat, int x, int y);
+    default void setSubData(ByteBuffer data, int width, int height, ColorFormat colorFormat, int x, int y) {
+        setMipMapSubData(0, data, width, height, colorFormat, x, y);
+    }
+
+    void setMipMapSubData(int mipLevel, ByteBuffer data, int width, int height, ColorFormat colorFormat, int x, int y);
+
+    /**
+     * Generates all mip-map levels down to 1x1.
+     */
+    void generateAllMipMaps();
 
     @Override
     default Texture2D getSourceTexture() {

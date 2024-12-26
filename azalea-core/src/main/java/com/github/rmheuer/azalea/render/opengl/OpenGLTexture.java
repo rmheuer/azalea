@@ -12,10 +12,16 @@ public abstract class OpenGLTexture implements Texture {
     protected final int id;
     private ColorFormat colorFormat;
 
+    private Filter minFilter;
+    private MipMapMode mipMapMode;
+
     public OpenGLTexture(GLStateManager state) {
         this.state = state;
         id = glGenTextures();
         colorFormat = null;
+
+        minFilter = null; // Should be set by subclasses
+        mipMapMode = MipMapMode.DISABLED;
     }
 
     protected abstract void bindToTarget();
@@ -97,12 +103,12 @@ public abstract class OpenGLTexture implements Texture {
         state.setPixelUnpackAlignment(align);
     }
 
-    protected void setData(int target, ByteBuffer data, int width, int height, ColorFormat colorFormat) {
+    protected void setMipMapData(int target, int mipLevel, ByteBuffer data, int width, int height, ColorFormat colorFormat) {
         this.colorFormat = colorFormat;
         setUnpackAlignment(MemoryUtil.memAddressSafe(data), width, colorFormat);
         glTexImage2D(
                 target,
-                0,
+                mipLevel,
                 getGlInternalFormat(colorFormat),
                 width,
                 height,
@@ -113,14 +119,14 @@ public abstract class OpenGLTexture implements Texture {
         );
     }
 
-    protected void setData(int target, BitmapRegion data) {
+    protected void setMipMapData(int target, int mipLevel, BitmapRegion data) {
         DataPtr ptr = getBitmapData(data);
         colorFormat = data.getColorFormat();
 
         setUnpackAlignment(ptr.ptr, data.getWidth(), colorFormat);
         glTexImage2D(
                 target,
-                0,
+                mipLevel,
                 getGlInternalFormat(colorFormat),
                 data.getWidth(),
                 data.getHeight(),
@@ -133,7 +139,7 @@ public abstract class OpenGLTexture implements Texture {
         ptr.freeIfOwned();
     }
 
-    protected void setSubData(int target, ByteBuffer data, int width, int height, ColorFormat colorFormat, int x, int y) {
+    protected void setMipMapSubData(int target, int mipLevel, ByteBuffer data, int width, int height, ColorFormat colorFormat, int x, int y) {
         if (this.colorFormat == null)
             throw new IllegalStateException("Must call setData() or setSize() first");
         if (this.colorFormat != colorFormat)
@@ -141,10 +147,10 @@ public abstract class OpenGLTexture implements Texture {
 
         int format = getGlFormat(colorFormat);
         setUnpackAlignment(MemoryUtil.memAddressSafe(data), width, colorFormat);
-        glTexSubImage2D(target, 0, x, y, width, height, format, GL_UNSIGNED_BYTE, data);
+        glTexSubImage2D(target, mipLevel, x, y, width, height, format, GL_UNSIGNED_BYTE, data);
     }
 
-    protected void setSubData(int target, BitmapRegion data, int x, int y) {
+    protected void setMipMapSubData(int target, int mipLevel, BitmapRegion data, int x, int y) {
         ColorFormat colorFormat = data.getColorFormat();
         if (this.colorFormat == null)
             throw new IllegalStateException("Must call setData() or setSize() first");
@@ -154,7 +160,7 @@ public abstract class OpenGLTexture implements Texture {
         DataPtr ptr = getBitmapData(data);
         int format = getGlFormat(colorFormat);
         setUnpackAlignment(ptr.ptr, data.getWidth(), colorFormat);
-        glTexSubImage2D(target, 0, x, y, data.getWidth(), data.getHeight(), format, GL_UNSIGNED_BYTE, ptr.ptr);
+        glTexSubImage2D(target, mipLevel, x, y, data.getWidth(), data.getHeight(), format, GL_UNSIGNED_BYTE, ptr.ptr);
 
         ptr.freeIfOwned();
     }
@@ -188,6 +194,42 @@ public abstract class OpenGLTexture implements Texture {
             default:
                 throw new IllegalArgumentException(String.valueOf(filter));
         }
+    }
+
+    private void updateMinFilterMode(int target) {
+        boolean linear = minFilter == Filter.LINEAR;
+
+        int mode;
+        switch (mipMapMode) {
+            case DISABLED:
+                mode = linear ? GL_LINEAR : GL_NEAREST;
+                break;
+            case NEAREST:
+                mode = linear ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST_MIPMAP_NEAREST;
+                break;
+            case LINEAR:
+                mode = linear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR;
+                break;
+            default:
+                throw new AssertionError();
+        }
+
+        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, mode);
+    }
+
+    protected void setMinFilter(int target, Filter minFilter) {
+        this.minFilter = minFilter;
+        updateMinFilterMode(target);
+    }
+
+    protected void setMipMapMode(int target, MipMapMode mode) {
+        this.mipMapMode = mode;
+        updateMinFilterMode(target);
+    }
+
+    protected void setMipMapRange(int target, int minLevel, int maxLevel) {
+        glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, minLevel);
+        glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevel);
     }
 
     public void bind(int slot) {

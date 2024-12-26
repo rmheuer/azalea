@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
  * each cube face.
  */
 // TODO: Checks for face image being square and all same size
+// TODO: Support mip-maps
 public interface TextureCubeMap extends Texture {
     /**
      * Allocates GPU memory for the specified texture size, without uploading
