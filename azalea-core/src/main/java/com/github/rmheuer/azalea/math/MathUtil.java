@@ -104,6 +104,10 @@ public final class MathUtil {
 	return (i - 1) / divisor + 1;
     }
 
+    public static float expDecay(float a, float b, float decay, float dt) {
+        return b + (a - b) * (float) Math.exp(-decay * dt);
+    }
+
     private MathUtil() {
         throw new AssertionError();
     }
