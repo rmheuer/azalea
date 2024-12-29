@@ -171,9 +171,10 @@ public final class VertexData implements SafeCloseable {
     public void finish() {
         if (finished)
             throw new IllegalStateException("Already finished");
-        finished = true;
 
         finalVertexCount = getVertexCount();
+        finished = true;
+
         data.flip();
     }
 

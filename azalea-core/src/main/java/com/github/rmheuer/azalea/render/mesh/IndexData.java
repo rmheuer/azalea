@@ -165,9 +165,10 @@ public final class IndexData implements SafeCloseable {
     public void finish() {
         if (finished)
             throw new IllegalStateException("Already finished");
-        finished = true;
 
         finalIndexCount = getIndexCount();
+        finished = true;
+
         data.flip();
     }
 

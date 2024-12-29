@@ -12,6 +12,7 @@
     <modules>
         <module>azalea-core</module>
         <module>azalea-imgui</module>
+        <module>azalea-voxel</module>
     </modules>
 
     <properties>
