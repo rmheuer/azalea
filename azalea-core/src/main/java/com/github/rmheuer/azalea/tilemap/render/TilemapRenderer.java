@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class TilemapRenderer implements SafeCloseable {
+public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeCloseable {
     static final class Animation implements SafeCloseable {
         private final Texture2D atlasTex;
         private final int spriteX, spriteY;
@@ -111,7 +111,8 @@ public final class TilemapRenderer implements SafeCloseable {
     private final TextureCache textureCache;
     private final List<Animation> animations;
 
-    private TilemapWrapper<?> tilemapWrapper;
+    private Tilemap<T> tilemap;
+    private TileRenderer<T> tileRenderer;
     private final Map<Integer, Boolean> visibleLayers;
     private float zPerLayer;
 
@@ -119,7 +120,8 @@ public final class TilemapRenderer implements SafeCloseable {
         textureCache = new TextureCache(renderer, 512, 0);
         animations = new ArrayList<>();
 
-        tilemapWrapper = null;
+        tilemap = null;
+        tileRenderer = DefaultTileRenderer.getInstance();
         visibleLayers = new HashMap<>();
         zPerLayer = 1.0f;
     }
@@ -181,18 +183,6 @@ public final class TilemapRenderer implements SafeCloseable {
         return new TileSprite(stored.region.getFlippedVertically(), anim);
     }
 
-    public <T extends RenderableTile<T>> void setTilemap(Tilemap<T> tilemap) {
-        tilemapWrapper = tilemap != null ? new TilemapWrapper<>(tilemap) : null;
-    }
-
-    public void setLayerVisible(int layer, boolean visible) {
-        visibleLayers.put(layer, visible);
-    }
-
-    public void setLayerZScale(float zPerLayer) {
-        this.zPerLayer = zPerLayer;
-    }
-
     public void tickAnimations(float dt) {
         for (Animation anim : animations) {
             anim.tick(dt);
@@ -200,43 +190,35 @@ public final class TilemapRenderer implements SafeCloseable {
     }
 
     public void renderTilemap(Matrix4f proj, Matrix4f view, Renderer2D renderer2D) {
-        renderTilemapGeneric(
+        renderTilemap(
                 proj,
                 view,
                 renderer2D,
-                renderer2D.getRenderer().getDefaultFramebuffer(),
-                tilemapWrapper.tilemap
+                renderer2D.getRenderer().getDefaultFramebuffer()
         );
     }
 
-    public void renderTilemap(Matrix4f proj, Matrix4f view, Renderer2D renderer2D, Framebuffer targetFb) {
-        renderTilemapGeneric(proj, view, renderer2D, targetFb, tilemapWrapper.tilemap);
-    }
-
-    private <T extends RenderableTile<T>> void renderTilemapGeneric(
+    private void renderTilemap(
             Matrix4f proj,
             Matrix4f view,
             Renderer2D renderer2D,
-            Framebuffer targetFb,
-            Tilemap<T> tilemap
+            Framebuffer targetFb
     ) {
         for (TilemapLayer<T> layer : tilemap.getLayersBackToFront()) {
             boolean visible = visibleLayers.getOrDefault(layer.getZIndex(), true);
             if (visible)
-                renderLayer(proj, view, renderer2D, targetFb, tilemap, layer);
+                renderLayer(proj, view, renderer2D, targetFb, layer);
         }
     }
 
-    private <T extends RenderableTile<T>> void renderLayer(
+    private void renderLayer(
             Matrix4f proj,
             Matrix4f view,
             Renderer2D renderer2D,
             Framebuffer targetFb,
-            Tilemap<T> tilemap,
             TilemapLayer<T> layer
     ) {
-        // TODO: Cache tilemap meshes
-        // TODO: Frustum cull tile chunks
+        // TODO: Frustum cull tiles
 
         Vector2ic min = layer.getBoundsMin();
         int minX = min.x();
@@ -260,13 +242,29 @@ public final class TilemapRenderer implements SafeCloseable {
                 if (anim != null)
                     anim.updateTexture();
 
-                draw.drawImage(x, y, 1, 1, sprite.getTexRegion());
+                tileRenderer.renderTile(draw, sprite.getTexRegion(), tile, tilemap, x, y);
             }
         }
 
         Matrix4f model = new Matrix4f().translation(0, 0, layer.getZIndex() * zPerLayer);
         Matrix4f mvp = new Matrix4f(proj).mul(view).mul(model);
         renderer2D.draw(draw, mvp, targetFb);
+    }
+
+    public void setTilemap(Tilemap<T> tilemap) {
+        this.tilemap = tilemap;
+    }
+
+    public void setTileRenderer(TileRenderer<T> tileRenderer) {
+        this.tileRenderer = tileRenderer;
+    }
+
+    public void setLayerVisible(int layer, boolean visible) {
+        visibleLayers.put(layer, visible);
+    }
+
+    public void setLayerZScale(float zPerLayer) {
+        this.zPerLayer = zPerLayer;
     }
 
     @Override
