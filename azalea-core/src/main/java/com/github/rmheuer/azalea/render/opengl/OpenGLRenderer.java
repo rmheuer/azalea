@@ -218,6 +218,9 @@ public final class OpenGLRenderer implements Renderer {
 
         @Override
         public void draw(VertexBuffer vertices, PrimitiveType primType, int startIdx, int count) {
+            if (count == 0)
+                return;
+
             OpenGLVertexBuffer vertexBuf = (OpenGLVertexBuffer) vertices;
             int vertexCount = vertexBuf.getVertexCount();
             if (startIdx >= vertexCount)
@@ -231,6 +234,9 @@ public final class OpenGLRenderer implements Renderer {
 
         @Override
         public void draw(VertexBuffer vertices, IndexBuffer indices, int startIdx, int count, int indexOffset) {
+            if (count == 0)
+                return;
+
             OpenGLVertexBuffer vertexBuf = (OpenGLVertexBuffer) vertices;
             OpenGLIndexBuffer indexBuf = (OpenGLIndexBuffer) indices;
 
