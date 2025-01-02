@@ -7,7 +7,7 @@ import org.joml.Vector2ic;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class InfiniteTilemap<T> extends Tilemap<T> {
+public class InfiniteTilemap<T> extends Tilemap<T> {
     private final int chunkWidth, chunkHeight;
 
     public InfiniteTilemap(int chunkSize) {

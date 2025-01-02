@@ -5,7 +5,7 @@ import com.github.rmheuer.azalea.utils.UnsafeUtil;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
-public final class FiniteTilemap<T> extends Tilemap<T> {
+public class FiniteTilemap<T> extends Tilemap<T> {
     private final Vector2i size;
 
     public FiniteTilemap(int width, int height) {
