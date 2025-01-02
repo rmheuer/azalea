@@ -139,4 +139,6 @@ public interface BitmapRegion {
                 w, h
         );
     }
+
+    Bitmap copied();
 }

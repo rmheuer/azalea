@@ -3,6 +3,7 @@ package com.github.rmheuer.azalea.render.texture;
 import com.github.rmheuer.azalea.io.IOUtil;
 import com.github.rmheuer.azalea.utils.SafeCloseable;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -166,6 +167,13 @@ public final class Bitmap implements BitmapRegion, SafeCloseable {
                     rowBytes
             );
         }
+    }
+
+    @Override
+    public Bitmap copied() {
+        Bitmap copy = new Bitmap(width, height, colorFormat);
+        memCopy(dataPtr, copy.dataPtr, dataLen);
+        return copy;
     }
 
     private void checkBounds(int x, int y) {

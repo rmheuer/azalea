@@ -41,8 +41,6 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
             timeUntilNextFrame = frames[currentFrame].getTime();
             interpolated = null;
 
-            // Set initial data
-            atlasTex.setSubData(frames[currentFrame].getImg(), spriteX, spriteY);
             needsUpdateTexture = true;
         }
 
@@ -96,6 +94,10 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
         public void close() {
             if (interpolated != null)
                 interpolated.close();
+
+            for (AnimationFrame frame : frames) {
+                frame.close();
+            }
         }
     }
 

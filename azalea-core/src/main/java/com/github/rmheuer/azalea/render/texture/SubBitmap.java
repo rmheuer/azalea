@@ -1,5 +1,7 @@
 package com.github.rmheuer.azalea.render.texture;
 
+import org.lwjgl.system.MemoryUtil;
+
 final class SubBitmap implements BitmapRegion {
     private final Bitmap srcBitmap;
     private final int x, y, width, height;
@@ -91,5 +93,26 @@ final class SubBitmap implements BitmapRegion {
     @Override
     public int getSourceOffsetY() {
         return y;
+    }
+
+    @Override
+    public Bitmap copied() {
+        ColorFormat format = srcBitmap.getColorFormat();
+        int byteCount = format.getByteCount();
+
+        int srcStride = srcBitmap.getWidth() * byteCount;
+        long base = srcBitmap.getPixelDataPtr()
+                + x * byteCount
+                + y * srcStride;
+
+        Bitmap copy = new Bitmap(width, height, format);
+        long copyPtr = copy.getPixelDataPtr();
+
+        int subStride = width * byteCount;
+        for (int y = 0; y < height; y++) {
+            MemoryUtil.memCopy(base + y * srcStride, copyPtr + y * subStride, subStride);
+        }
+
+        return copy;
     }
 }

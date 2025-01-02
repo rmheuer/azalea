@@ -26,47 +26,30 @@ public abstract class OpenGLTexture implements Texture {
 
     protected abstract void bindToTarget();
 
-    private static final class DataPtr {
-        public final long ptr;
+    private static final class BitmapData {
+        public final Bitmap bitmap;
         private final boolean owned;
 
-        public DataPtr(long ptr, boolean owned) {
-            this.ptr = ptr;
+        public BitmapData(Bitmap bitmap, boolean owned) {
+            this.bitmap = bitmap;
             this.owned = owned;
         }
 
         public void freeIfOwned() {
             if (owned) {
-                MemoryUtil.nmemFree(ptr);
+                bitmap.close();
             }
         }
     }
 
-    private DataPtr getBitmapData(BitmapRegion data) {
+    private BitmapData getBitmapData(BitmapRegion data) {
         Bitmap src = data.getSourceBitmap();
-        long srcPtr = src.getPixelDataPtr();
         if (data.spansFullSource()) {
-            return new DataPtr(srcPtr, false);
+            return new BitmapData(src, false);
         }
 
         // Data is a subregion, copy out the region to a new buffer
-
-        ColorFormat format = data.getColorFormat();
-        int byteCount = format.getByteCount();
-
-        int srcStride = src.getWidth() * byteCount;
-        long base = srcPtr
-                + data.getSourceOffsetX() * byteCount
-                + data.getSourceOffsetY() * srcStride;
-
-        int dataStride = data.getWidth() * byteCount;
-        int dataH = data.getHeight();
-        long newBuffer = MemoryUtil.nmemAlloc(dataStride * dataH);
-        for (int y = 0; y < dataH; y++) {
-            MemoryUtil.memCopy(base + y * srcStride, newBuffer + y * dataStride, dataStride);
-        }
-
-        return new DataPtr(newBuffer, true);
+        return new BitmapData(data.copied(), true);
     }
 
     private int getGlFormat(ColorFormat format) {
@@ -119,24 +102,25 @@ public abstract class OpenGLTexture implements Texture {
         );
     }
 
-    protected void setMipMapData(int target, int mipLevel, BitmapRegion data) {
-        DataPtr ptr = getBitmapData(data);
-        colorFormat = data.getColorFormat();
+    protected void setMipMapData(int target, int mipLevel, BitmapRegion region) {
+        BitmapData data = getBitmapData(region);
+        colorFormat = region.getColorFormat();
 
-        setUnpackAlignment(ptr.ptr, data.getWidth(), colorFormat);
+        long ptr = data.bitmap.getPixelDataPtr();
+        setUnpackAlignment(ptr, region.getWidth(), colorFormat);
         glTexImage2D(
                 target,
                 mipLevel,
                 getGlInternalFormat(colorFormat),
-                data.getWidth(),
-                data.getHeight(),
+                region.getWidth(),
+                region.getHeight(),
                 0,
                 getGlFormat(colorFormat),
                 GL_UNSIGNED_BYTE,
-                ptr.ptr
+                ptr
         );
 
-        ptr.freeIfOwned();
+        data.freeIfOwned();
     }
 
     protected void setMipMapSubData(int target, int mipLevel, ByteBuffer data, int width, int height, ColorFormat colorFormat, int x, int y) {
@@ -150,19 +134,21 @@ public abstract class OpenGLTexture implements Texture {
         glTexSubImage2D(target, mipLevel, x, y, width, height, format, GL_UNSIGNED_BYTE, data);
     }
 
-    protected void setMipMapSubData(int target, int mipLevel, BitmapRegion data, int x, int y) {
-        ColorFormat colorFormat = data.getColorFormat();
+    protected void setMipMapSubData(int target, int mipLevel, BitmapRegion region, int x, int y) {
+        ColorFormat colorFormat = region.getColorFormat();
         if (this.colorFormat == null)
             throw new IllegalStateException("Must call setData() or setSize() first");
         if (this.colorFormat != colorFormat)
             throw new IllegalArgumentException("Color format does not match: expected " + this.colorFormat + ", given " + colorFormat);
 
-        DataPtr ptr = getBitmapData(data);
-        int format = getGlFormat(colorFormat);
-        setUnpackAlignment(ptr.ptr, data.getWidth(), colorFormat);
-        glTexSubImage2D(target, mipLevel, x, y, data.getWidth(), data.getHeight(), format, GL_UNSIGNED_BYTE, ptr.ptr);
+        BitmapData data = getBitmapData(region);
+        long ptr = data.bitmap.getPixelDataPtr();
 
-        ptr.freeIfOwned();
+        int format = getGlFormat(colorFormat);
+        setUnpackAlignment(ptr, region.getWidth(), colorFormat);
+        glTexSubImage2D(target, mipLevel, x, y, region.getWidth(), region.getHeight(), format, GL_UNSIGNED_BYTE, ptr);
+
+        data.freeIfOwned();
     }
 
     private int getGlChannelSource(ChannelMapping.Source source) {
