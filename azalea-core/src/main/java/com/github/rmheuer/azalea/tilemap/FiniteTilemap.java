@@ -13,6 +13,17 @@ public final class FiniteTilemap<T> extends Tilemap<T> {
         createLayer(0);
     }
 
+    public FiniteTilemap(int width, int height, T fill) {
+        this(width, height);
+
+        TilemapLayer<T> layer0 = getLayer(0);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                layer0.setTile(x, y, fill);
+            }
+        }
+    }
+
     @Override
     protected TilemapLayer<T> createLayerImpl(int zIndex) {
         return new Layer(zIndex);
