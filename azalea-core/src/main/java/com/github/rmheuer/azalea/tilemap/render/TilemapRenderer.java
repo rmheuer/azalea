@@ -101,15 +101,6 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
         }
     }
 
-    // Needed to make the generics work
-    private static final class TilemapWrapper<T extends RenderableTile<T>> {
-        public final Tilemap<T> tilemap;
-
-        public TilemapWrapper(Tilemap<T> tilemap) {
-            this.tilemap = tilemap;
-        }
-    }
-
     private final TextureCache textureCache;
     private final List<Animation> animations;
 
