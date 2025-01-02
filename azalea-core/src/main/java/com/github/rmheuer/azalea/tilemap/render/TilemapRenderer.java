@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class TilemapRenderer implements SafeCloseable {
-    private static final class Animation implements SafeCloseable {
+    static final class Animation implements SafeCloseable {
         private final Texture2D atlasTex;
         private final int spriteX, spriteY;
 
@@ -28,6 +28,8 @@ public final class TilemapRenderer implements SafeCloseable {
         private int currentFrame;
         private float timeUntilNextFrame;
         private Bitmap interpolated;
+
+        private boolean needsUpdateTexture;
 
         public Animation(TextureCache.StoredTexture texture, AnimationFrame[] frames) {
             atlasTex = texture.region.getSourceTexture();
@@ -41,9 +43,9 @@ public final class TilemapRenderer implements SafeCloseable {
 
             // Set initial data
             atlasTex.setSubData(frames[currentFrame].getImg(), spriteX, spriteY);
+            needsUpdateTexture = true;
         }
 
-        // TODO: Only update texture when changed, and in render()
         public void tick(float dt) {
             timeUntilNextFrame -= dt;
             while (timeUntilNextFrame < 0) {
@@ -53,13 +55,19 @@ public final class TilemapRenderer implements SafeCloseable {
                 AnimationFrame frame = frames[currentFrame];
                 timeUntilNextFrame += frame.getTime();
 
-                if (!frame.isInterpolateToNext())
-                    atlasTex.setSubData(frame.getImg(), spriteX, spriteY);
+                needsUpdateTexture = true;
             }
 
-            if (frames[currentFrame].isInterpolateToNext()) {
-                AnimationFrame currentF = frames[currentFrame];
+            if (frames[currentFrame].isInterpolateToNext())
+                needsUpdateTexture = true;
+        }
 
+        public void updateTexture() {
+            if (!needsUpdateTexture)
+                return;
+
+            AnimationFrame currentF = frames[currentFrame];
+            if (currentF.isInterpolateToNext()) {
                 BitmapRegion current = currentF.getImg();
                 BitmapRegion next = frames[(currentFrame + 1) % frames.length].getImg();
 
@@ -77,7 +85,11 @@ public final class TilemapRenderer implements SafeCloseable {
                 }
 
                 atlasTex.setSubData(interpolated, spriteX, spriteY);
+            } else {
+                atlasTex.setSubData(currentF.getImg(), spriteX, spriteY);
             }
+
+            needsUpdateTexture = false;
         }
 
         @Override
@@ -114,7 +126,7 @@ public final class TilemapRenderer implements SafeCloseable {
 
     public TileSprite createStaticSprite(BitmapRegion img) {
         TextureCache.StoredTexture stored = textureCache.store(img);
-        return new TileSprite(stored.region.getFlippedVertically());
+        return new TileSprite(stored.region.getFlippedVertically(), null);
     }
 
     public TileSprite createAnimatedSprite(float fps, BitmapRegion... frames) {
@@ -166,7 +178,7 @@ public final class TilemapRenderer implements SafeCloseable {
         Animation anim = new Animation(stored, frames);
         animations.add(anim);
 
-        return new TileSprite(stored.region.getFlippedVertically());
+        return new TileSprite(stored.region.getFlippedVertically(), anim);
     }
 
     public <T extends RenderableTile<T>> void setTilemap(Tilemap<T> tilemap) {
@@ -243,6 +255,10 @@ public final class TilemapRenderer implements SafeCloseable {
                 TileSprite sprite = tile.getSprite(tilemap, x, y);
                 if (sprite == null)
                     continue;
+
+                Animation anim = sprite.getAnimation();
+                if (anim != null)
+                    anim.updateTexture();
 
                 draw.drawImage(x, y, 1, 1, sprite.getTexRegion());
             }
