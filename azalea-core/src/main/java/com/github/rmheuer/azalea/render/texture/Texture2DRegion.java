@@ -53,7 +53,7 @@ public interface Texture2DRegion {
      * Gets a view of the region reflected over the X axis
      * @return flipped region
      */
-    default Texture2DRegion getFlippedX() {
+    default Texture2DRegion getFlippedVertically() {
         Vector2f min = getRegionTopLeftUV();
         Vector2f max = getRegionBottomRightUV();
         return new SubTexture2D(
@@ -67,7 +67,7 @@ public interface Texture2DRegion {
      * Gets a view of the region reflected over the Y axis
      * @return flipped region
      */
-    default Texture2DRegion getFlippedY() {
+    default Texture2DRegion getFlippedHorizontally() {
         Vector2f min = getRegionTopLeftUV();
         Vector2f max = getRegionBottomRightUV();
         return new SubTexture2D(

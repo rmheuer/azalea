@@ -1,5 +1,7 @@
 package com.github.rmheuer.azalea.render.texture;
 
+import com.github.rmheuer.azalea.math.MathUtil;
+import com.github.rmheuer.azalea.render.Colors;
 import org.lwjgl.system.MemoryUtil;
 
 public enum ColorFormat {
@@ -36,6 +38,11 @@ public enum ColorFormat {
                 MemoryUtil.memPutInt(dataPtr + pixelCount * 4 - 4, color);
             }
         }
+
+        @Override
+        public int lerp(int colorA, int colorB, float f) {
+            return Colors.RGBA.lerp(colorA, colorB, f);
+        }
     },
 
     /**
@@ -62,6 +69,11 @@ public enum ColorFormat {
         @Override
         public void fillBuffer(long dataPtr, int pixelCount, int color) {
             MemoryUtil.memSet(dataPtr, color, pixelCount);
+        }
+
+        @Override
+        public int lerp(int colorA, int colorB, float f) {
+            return MathUtil.lerpInt(colorA, colorB, f);
         }
     };
 
@@ -97,4 +109,6 @@ public enum ColorFormat {
      * @param color color to fill the buffer with
      */
     public abstract void fillBuffer(long dataPtr, int pixelCount, int color);
+
+    public abstract int lerp(int colorA, int colorB, float f);
 }

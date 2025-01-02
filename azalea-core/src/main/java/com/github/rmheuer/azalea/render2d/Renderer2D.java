@@ -97,6 +97,10 @@ public final class Renderer2D implements SafeCloseable {
         this.depthTest = depthTest;
     }
 
+    public Renderer getRenderer() {
+        return renderer;
+    }
+
     @Override
     public void close() {
         mesh.close();

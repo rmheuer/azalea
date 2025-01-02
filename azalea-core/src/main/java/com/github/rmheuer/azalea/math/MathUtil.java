@@ -1,6 +1,11 @@
 package com.github.rmheuer.azalea.math;
 
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
+
 public final class MathUtil {
+    public static final Vector2ic VEC2I_ZERO = new Vector2i(0, 0);
+
     /**
      * Constrains a value within a range.
      *
