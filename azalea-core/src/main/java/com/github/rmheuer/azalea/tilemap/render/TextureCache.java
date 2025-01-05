@@ -2,6 +2,7 @@ package com.github.rmheuer.azalea.tilemap.render;
 
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.texture.*;
+import com.github.rmheuer.azalea.utils.RectPackNode;
 import com.github.rmheuer.azalea.utils.SafeCloseable;
 
 import java.util.ArrayList;
@@ -21,56 +22,11 @@ public final class TextureCache implements SafeCloseable {
         }
     }
 
-    private static final class Node {
-        private final int x, y;
-        private final int width, height;
-        private Node childA, childB;
-        private boolean filled;
-
-        public Node(int x, int y, int width, int height) {
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.height = height;
-        }
-
-        public Node insert(int imageW, int imageH, int pad) {
-            if (filled)
-                return null;
-
-            if (childA != null && childB != null) {
-                Node newNode = childA.insert(imageW, imageH, pad);
-                if (newNode != null)
-                    return newNode;
-                return childB.insert(imageW, imageH, pad);
-            }
-
-            if (imageW > width || imageH > height)
-                return null;
-            if (width - imageW <= pad && height - imageH <= pad) {
-                filled = true;
-                return this;
-            }
-
-            int dw = width - imageW;
-            int dh = height - imageH;
-            if (dw > dh) {
-                childA = new Node(x, y, imageW, height);
-                childB = new Node(x + imageW + pad, y, width - imageW - pad, height);
-            } else {
-                childA = new Node(x, y, width, imageH);
-                childB = new Node(x, y + imageH + pad, width, height - imageH - pad);
-            }
-
-            return childA.insert(imageW, imageH, pad);
-        }
-    }
-
     private static final class Page implements SafeCloseable {
         private final int size;
         private final int padding;
         private final Texture2D texture;
-        private final Node root;
+        private final RectPackNode root;
 
         // Dimensions of the smallest image that didn't fit
         private int minNotFitW, minNotFitH;
@@ -86,7 +42,7 @@ public final class TextureCache implements SafeCloseable {
                 texture.setChannelMapping(ChannelMapping.GRAYSCALE_TRANSPARENCY);
             }
 
-            root = new Node(0, 0, size, size);
+            root = new RectPackNode(0, 0, size, size);
             minNotFitW = minNotFitH = Integer.MAX_VALUE;
         }
 
@@ -98,7 +54,7 @@ public final class TextureCache implements SafeCloseable {
                 return null;
             }
 
-            Node imageNode = root.insert(width, height, padding);
+            RectPackNode imageNode = root.insert(width, height, padding);
             if (imageNode == null) {
                 minNotFitW = Math.min(minNotFitW, width);
                 minNotFitH = Math.min(minNotFitH, height);
