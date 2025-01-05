@@ -114,12 +114,16 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
         tileRenderer = DefaultTileRenderer.getInstance();
     }
 
-    public TileSprite createStaticSprite(BitmapRegion img) {
+    // All createXXXSprite() methods take ownership of the bitmap(s)
+
+    public TileSprite createStaticSprite(Bitmap img) {
         TextureCache.StoredTexture stored = textureCache.store(img);
+        img.close();
+
         return new TileSprite(stored.region.getFlippedVertically(), null);
     }
 
-    public TileSprite createAnimatedSprite(float fps, BitmapRegion... frames) {
+    public TileSprite createAnimatedSprite(float fps, Bitmap... frames) {
         float frameTime = 1 / fps;
         AnimationFrame[] animFrames = new AnimationFrame[frames.length];
         for (int i = 0; i < frames.length; i++) {
@@ -129,7 +133,7 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
         return createAnimatedSprite(animFrames);
     }
 
-    public TileSprite createInterpolatedAnimatedSprite(float fps, BitmapRegion... frames) {
+    public TileSprite createInterpolatedAnimatedSprite(float fps, Bitmap... frames) {
         float frameTime = 1 / fps;
         AnimationFrame[] animFrames = new AnimationFrame[frames.length];
         for (int i = 0; i < frames.length; i++) {

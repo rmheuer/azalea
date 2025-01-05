@@ -9,12 +9,12 @@ public final class AnimationFrame implements SafeCloseable {
     private final float time;
     private final boolean interpolateToNext;
 
-    public AnimationFrame(BitmapRegion img, float time) {
+    public AnimationFrame(Bitmap img, float time) {
         this(img, time, false);
     }
 
-    public AnimationFrame(BitmapRegion img, float time, boolean interpolateToNext) {
-        this.img = img.copied();
+    public AnimationFrame(Bitmap img, float time, boolean interpolateToNext) {
+        this.img = img;
         this.time = time;
         this.interpolateToNext = interpolateToNext;
     }
