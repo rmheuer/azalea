@@ -1,16 +1,15 @@
 package com.github.rmheuer.azalea.tilemap.render;
 
 import com.github.rmheuer.azalea.render.Renderer;
-import com.github.rmheuer.azalea.render.framebuffer.Framebuffer;
 import com.github.rmheuer.azalea.render.texture.Bitmap;
 import com.github.rmheuer.azalea.render.texture.BitmapRegion;
 import com.github.rmheuer.azalea.render.texture.ColorFormat;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
 import com.github.rmheuer.azalea.render2d.DrawList2D;
-import com.github.rmheuer.azalea.render2d.Renderer2D;
 import com.github.rmheuer.azalea.tilemap.Tilemap;
 import com.github.rmheuer.azalea.tilemap.TilemapLayer;
 import com.github.rmheuer.azalea.utils.SafeCloseable;
+import org.joml.FrustumIntersection;
 import org.joml.Matrix4f;
 import org.joml.Vector2ic;
 
@@ -105,6 +104,8 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
     private Tilemap<T> tilemap;
     private TileRenderer<T> tileRenderer;
 
+    private final FrustumIntersection frustum = new FrustumIntersection();
+
     public TilemapRenderer(Renderer renderer) {
         textureCache = new TextureCache(renderer, 512, 0);
         animations = new ArrayList<>();
@@ -176,42 +177,30 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
         }
     }
 
-    public void renderAllLayers(Matrix4f proj, Matrix4f view, Renderer2D renderer2D) {
-        renderAllLayers(
-                proj,
-                view,
-                renderer2D,
-                renderer2D.getRenderer().getDefaultFramebuffer()
-        );
+    private boolean updateFrustum(Matrix4f modelView) {
+        if (modelView == null)
+            return false;
+
+        frustum.set(modelView);
+        return true;
     }
 
-    public void renderAllLayers(
-            Matrix4f proj,
-            Matrix4f view,
-            Renderer2D renderer2D,
-            Framebuffer targetFb
-    ) {
+    public void renderAllLayers(DrawList2D draw) { renderAllLayers(draw, null); }
+    public void renderAllLayers(DrawList2D draw, Matrix4f modelView) {
+        boolean useFrustumCull = updateFrustum(modelView);
         for (TilemapLayer<T> layer : tilemap.getLayersBackToFront()) {
-            renderLayer(proj, view, renderer2D, targetFb, layer);
+            renderLayer(layer, draw, useFrustumCull);
         }
     }
 
-    public void renderLayer(int layerZIndex, Matrix4f proj, Matrix4f view, Renderer2D renderer2D) {
-        renderLayer(layerZIndex, proj, view, renderer2D, renderer2D.getRenderer().getDefaultFramebuffer());
+    public void renderLayer(int layer, DrawList2D draw) { renderLayer(layer, draw, null); }
+    public void renderLayer(int layer, DrawList2D draw, Matrix4f modelView) {
+        boolean useFrustumCull = updateFrustum(modelView);
+        renderLayer(tilemap.getLayer(layer), draw, useFrustumCull);
     }
 
-    public void renderLayer(int layerZIndex, Matrix4f proj, Matrix4f view, Renderer2D renderer2D, Framebuffer targetFb) {
-        renderLayer(proj, view, renderer2D, targetFb, tilemap.getLayer(layerZIndex));
-    }
-
-    private void renderLayer(
-            Matrix4f proj,
-            Matrix4f view,
-            Renderer2D renderer2D,
-            Framebuffer targetFb,
-            TilemapLayer<T> layer
-    ) {
-        // TODO: Frustum cull tiles
+    private void renderLayer(TilemapLayer<T> layer, DrawList2D draw, boolean useFrustumCull) {
+        // TODO: Actually do frustum cull
 
         Vector2ic min = layer.getBoundsMin();
         int minX = min.x();
@@ -220,7 +209,6 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
         int maxX = max.x();
         int maxY = max.y();
 
-        DrawList2D draw = new DrawList2D();
         for (int y = minY; y < maxY; y++) {
             for (int x = minX; x < maxX; x++) {
                 T tile = layer.getTile(x, y);
@@ -238,9 +226,6 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
                 tileRenderer.renderTile(draw, sprite.getTexRegion(), tile, tilemap, x, y);
             }
         }
-
-        Matrix4f mvp = new Matrix4f(proj).mul(view);
-        renderer2D.draw(draw, mvp, targetFb);
     }
 
     public void setTilemap(Tilemap<T> tilemap) {
