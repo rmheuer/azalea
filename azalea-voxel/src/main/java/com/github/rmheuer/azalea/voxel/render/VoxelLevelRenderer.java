@@ -99,19 +99,52 @@ public abstract class VoxelLevelRenderer<B> implements SafeCloseable {
             int relY = Math.floorMod(y, sectionSize);
             int relZ = Math.floorMod(z, sectionSize);
 
+            boolean faceNX = relX == 0;
+            boolean facePX = relX == sectionSize - 1;
+            boolean faceNY = relY == 0;
+            boolean facePY = relY == sectionSize - 1;
+            boolean faceNZ = relZ == 0;
+            boolean facePZ = relZ == sectionSize - 1;
+
             markDirty(sectionX, sectionY, sectionZ);
-            if (relX == 0)
-                markDirty(sectionX - 1, sectionY, sectionZ);
-            if (relX == sectionSize - 1)
-                markDirty(sectionX + 1, sectionY, sectionZ);
-            if (relY == 0)
-                markDirty(sectionX, sectionY - 1, sectionZ);
-            if (relY == sectionSize - 1)
-                markDirty(sectionX, sectionY + 1, sectionZ);
-            if (relZ == 0)
-                markDirty(sectionX, sectionY, sectionZ - 1);
-            if (relZ == sectionSize - 1)
-                markDirty(sectionX, sectionY, sectionZ + 1);
+
+            // These checks could probably be done much more efficiently
+
+            // Check faces
+            if (faceNX) markDirty(sectionX - 1, sectionY, sectionZ);
+            if (facePX) markDirty(sectionX + 1, sectionY, sectionZ);
+            if (faceNY) markDirty(sectionX, sectionY - 1, sectionZ);
+            if (facePY) markDirty(sectionX, sectionY + 1, sectionZ);
+            if (faceNZ) markDirty(sectionX, sectionY, sectionZ - 1);
+            if (facePZ) markDirty(sectionX, sectionY, sectionZ + 1);
+
+            // Check edges
+            if (neighborUpdateRule.includesEdges()) {
+                if (faceNX && faceNY) markDirty(sectionX - 1, sectionY - 1, sectionZ);
+                if (faceNX && facePY) markDirty(sectionX - 1, sectionY + 1, sectionZ);
+                if (facePX && faceNY) markDirty(sectionX + 1, sectionY - 1, sectionZ);
+                if (facePX && facePY) markDirty(sectionX + 1, sectionY + 1, sectionZ);
+                if (faceNX && faceNZ) markDirty(sectionX - 1, sectionY, sectionZ - 1);
+                if (faceNX && facePZ) markDirty(sectionX - 1, sectionY, sectionZ + 1);
+                if (facePX && faceNZ) markDirty(sectionX + 1, sectionY, sectionZ - 1);
+                if (facePX && facePZ) markDirty(sectionX + 1, sectionY, sectionZ + 1);
+                if (faceNY && faceNZ) markDirty(sectionX, sectionY - 1, sectionZ - 1);
+                if (faceNY && facePZ) markDirty(sectionX, sectionY - 1, sectionZ + 1);
+                if (facePY && faceNZ) markDirty(sectionX, sectionY + 1, sectionZ - 1);
+                if (facePY && facePZ) markDirty(sectionX, sectionY + 1, sectionZ + 1);
+            }
+
+            // Check vertices
+            if (neighborUpdateRule.includesVertices()) {
+                if (faceNX && faceNY && faceNZ) markDirty(sectionX - 1, sectionY - 1, sectionZ - 1);
+                if (faceNX && faceNY && facePZ) markDirty(sectionX - 1, sectionY - 1, sectionZ + 1);
+                if (faceNX && facePY && faceNZ) markDirty(sectionX - 1, sectionY + 1, sectionZ - 1);
+                if (faceNX && facePY && facePZ) markDirty(sectionX - 1, sectionY + 1, sectionZ + 1);
+                if (facePX && faceNY && faceNZ) markDirty(sectionX + 1, sectionY - 1, sectionZ - 1);
+                if (facePX && faceNY && facePZ) markDirty(sectionX + 1, sectionY - 1, sectionZ + 1);
+                if (facePX && facePY && faceNZ) markDirty(sectionX + 1, sectionY + 1, sectionZ - 1);
+                if (facePX && facePY && facePZ) markDirty(sectionX + 1, sectionY + 1, sectionZ + 1);
+            }
         }
 
         public SectionData getSection(Vector3i pos) {
@@ -145,6 +178,7 @@ public abstract class VoxelLevelRenderer<B> implements SafeCloseable {
     private final int sectionSize;
     private LevelData levelData;
 
+    private NeighborUpdateRule neighborUpdateRule;
     private long maxRemeshMillis;
 
     private final FrustumIntersection frustum;
@@ -163,6 +197,7 @@ public abstract class VoxelLevelRenderer<B> implements SafeCloseable {
         this.sectionSize = sectionSize;
         levelData = null;
 
+        neighborUpdateRule = NeighborUpdateRule.FACES;
         maxRemeshMillis = 5;
 
         frustum = new FrustumIntersection();
@@ -283,6 +318,10 @@ public abstract class VoxelLevelRenderer<B> implements SafeCloseable {
 
     public void clearMeshData() {
         levelData.clearMeshData();
+    }
+
+    public void setNeighborUpdateRule(NeighborUpdateRule neighborUpdateRule) {
+        this.neighborUpdateRule = neighborUpdateRule;
     }
 
     public void setMaxRemeshMillis(long maxRemeshMillis) {
