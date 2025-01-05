@@ -1,20 +1,17 @@
 package com.github.rmheuer.azalea.tilemap;
 
-import org.joml.Vector2ic;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.TreeMap;
 
 public abstract class Tilemap<T> {
-    protected final Map<Integer, TilemapLayer<T>> layers;
+    protected final TreeMap<Integer, TilemapLayer<T>> layers;
     private TilemapLayer<T> layer0;
 
     private final List<TilemapListener<? super T>> listeners;
 
     public Tilemap() {
-        layers = new HashMap<>();
+        layers = new TreeMap<>();
         listeners = new ArrayList<>();
     }
 
@@ -34,15 +31,8 @@ public abstract class Tilemap<T> {
         return layers.get(zIndex);
     }
 
-    public List<TilemapLayer<T>> getLayersBackToFront() {
-        List<Integer> z = new ArrayList<>(layers.keySet());
-        z.sort(Integer::compareTo);
-
-        List<TilemapLayer<T>> out = new ArrayList<>();
-        for (int index : z) {
-            out.add(layers.get(index));
-        }
-        return out;
+    public Iterable<TilemapLayer<T>> getLayersBackToFront() {
+        return layers.values();
     }
 
     private TilemapLayer<T> getLayer0() {
