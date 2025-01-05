@@ -15,9 +15,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector2ic;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeCloseable {
     static final class Animation implements SafeCloseable {
@@ -106,8 +104,6 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
 
     private Tilemap<T> tilemap;
     private TileRenderer<T> tileRenderer;
-    private final Map<Integer, Boolean> visibleLayers;
-    private float zPerLayer;
 
     public TilemapRenderer(Renderer renderer) {
         textureCache = new TextureCache(renderer, 512, 0);
@@ -115,8 +111,6 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
 
         tilemap = null;
         tileRenderer = DefaultTileRenderer.getInstance();
-        visibleLayers = new HashMap<>();
-        zPerLayer = 1.0f;
     }
 
     public TileSprite createStaticSprite(BitmapRegion img) {
@@ -182,8 +176,8 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
         }
     }
 
-    public void renderTilemap(Matrix4f proj, Matrix4f view, Renderer2D renderer2D) {
-        renderTilemap(
+    public void renderAllLayers(Matrix4f proj, Matrix4f view, Renderer2D renderer2D) {
+        renderAllLayers(
                 proj,
                 view,
                 renderer2D,
@@ -191,17 +185,23 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
         );
     }
 
-    private void renderTilemap(
+    public void renderAllLayers(
             Matrix4f proj,
             Matrix4f view,
             Renderer2D renderer2D,
             Framebuffer targetFb
     ) {
         for (TilemapLayer<T> layer : tilemap.getLayersBackToFront()) {
-            boolean visible = visibleLayers.getOrDefault(layer.getZIndex(), true);
-            if (visible)
-                renderLayer(proj, view, renderer2D, targetFb, layer);
+            renderLayer(proj, view, renderer2D, targetFb, layer);
         }
+    }
+
+    public void renderLayer(int layerZIndex, Matrix4f proj, Matrix4f view, Renderer2D renderer2D) {
+        renderLayer(layerZIndex, proj, view, renderer2D, renderer2D.getRenderer().getDefaultFramebuffer());
+    }
+
+    public void renderLayer(int layerZIndex, Matrix4f proj, Matrix4f view, Renderer2D renderer2D, Framebuffer targetFb) {
+        renderLayer(proj, view, renderer2D, targetFb, tilemap.getLayer(layerZIndex));
     }
 
     private void renderLayer(
@@ -239,8 +239,7 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
             }
         }
 
-        Matrix4f model = new Matrix4f().translation(0, 0, layer.getZIndex() * zPerLayer);
-        Matrix4f mvp = new Matrix4f(proj).mul(view).mul(model);
+        Matrix4f mvp = new Matrix4f(proj).mul(view);
         renderer2D.draw(draw, mvp, targetFb);
     }
 
@@ -250,14 +249,6 @@ public final class TilemapRenderer<T extends RenderableTile<T>> implements SafeC
 
     public void setTileRenderer(TileRenderer<T> tileRenderer) {
         this.tileRenderer = tileRenderer;
-    }
-
-    public void setLayerVisible(int layer, boolean visible) {
-        visibleLayers.put(layer, visible);
-    }
-
-    public void setLayerZScale(float zPerLayer) {
-        this.zPerLayer = zPerLayer;
     }
 
     @Override
