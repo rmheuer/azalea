@@ -1,6 +1,7 @@
 package com.github.rmheuer.azalea.imgui;
 
 import com.github.rmheuer.azalea.event.EventBus;
+import com.github.rmheuer.azalea.event.EventListener;
 import com.github.rmheuer.azalea.event.EventPriority;
 import com.github.rmheuer.azalea.input.keyboard.Keyboard;
 import com.github.rmheuer.azalea.input.keyboard.KeyboardEvent;
@@ -16,7 +17,7 @@ import imgui.glfw.ImGuiImplGlfw;
 /**
  * ImGui backend implementation to render ImGui into an engine window.
  */
-public final class ImGuiBackend implements SafeCloseable {
+public final class ImGuiBackend implements EventListener, SafeCloseable {
     private final ImGuiImplGlfw implGlfw;
     private final ImGuiRenderBackend renderBackend;
     private final FrameTextures frameTextures;
@@ -27,8 +28,7 @@ public final class ImGuiBackend implements SafeCloseable {
      * @param eventBus event bus to receive input events from
      */
     public ImGuiBackend(Window window, EventBus eventBus) {
-        eventBus.addListener(KeyboardEvent.class, EventPriority.FIRST, this::onKeyboardEvent);
-        eventBus.addListener(MouseEvent.class, EventPriority.FIRST, this::onMouseEvent);
+        eventBus.addListener(this);
 
         implGlfw = new ImGuiImplGlfw();
 
@@ -48,6 +48,12 @@ public final class ImGuiBackend implements SafeCloseable {
 
         Keyboard winKb = window.getKeyboard();
         maskedKeyboard = (key) -> !ImGui.getIO().getWantCaptureKeyboard() && winKb.isKeyPressed(key);
+    }
+
+    @Override
+    public void registerEventHandlers(EventBus.HandlerSet handlers) {
+        handlers.register(KeyboardEvent.class, EventPriority.FIRST, this::onKeyboardEvent);
+        handlers.register(MouseEvent.class, EventPriority.FIRST, this::onMouseEvent);
     }
 
     // Cancel input events that ImGui captured

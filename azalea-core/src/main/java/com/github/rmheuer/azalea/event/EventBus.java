@@ -3,48 +3,64 @@ package com.github.rmheuer.azalea.event;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * The system to dispatch events to listeners.
- */
 public final class EventBus {
-    private static final class Listener<E extends Event> implements Comparable<Listener<?>> {
-        final Consumer<E> listener;
-        final EventPriority priority;
+    private static final class Handler<E extends Event> implements Comparable<Handler<?>> {
+        private final Consumer<E> handler;
+        private final EventPriority priority;
 
-        public Listener(Consumer<E> listener, EventPriority priority) {
-            this.listener = listener;
+        public Handler(Consumer<E> handler, EventPriority priority) {
+            this.handler = handler;
             this.priority = priority;
         }
 
         @Override
-        public int compareTo(Listener<?> o) {
+        public int compareTo(Handler<?> o) {
             // Comparison intentionally backwards, this makes higher priority
             // handlers happen earlier
             return Integer.compare(o.priority.getLevel(), this.priority.getLevel());
         }
     }
 
-    private final Map<Class<? extends Event>, List<Listener<? extends Event>>> listeners;
+    public static final class HandlerSet {
+        private final Map<Class<? extends Event>, List<Handler<?>>> handlers;
 
-    public EventBus() {
-        listeners = new HashMap<>();
+        public HandlerSet() {
+            handlers = new HashMap<>();
+        }
+
+        public <E extends Event> void register(Class<E> type, Consumer<E> handler) {
+            register(type, EventPriority.NORMAL, handler);
+        }
+
+        public <E extends Event> void register(Class<E> type, EventPriority priority, Consumer<E> handler) {
+            handlers.computeIfAbsent(type, (t) -> new ArrayList<>())
+                    .add(new Handler<>(handler, priority));
+        }
     }
 
-    /**
-     * Call handlers for an event and its superclasses. Superclasses are called
-     * first, then handlers are called going down the type hierarchy.
-     *
-     * @param event event to dispatch
-     */
+    private final Map<EventListener, HandlerSet> listenerHandlers;
+    private final HandlerSet defaultHandlerSet;
+
+    public EventBus() {
+        listenerHandlers = new HashMap<>();
+        defaultHandlerSet = new HandlerSet();
+    }
+
     public <E extends Event> void dispatchEvent(E event) {
         // Collect handlers for event and all supertypes of event
         Class<?> type = event.getClass();
-        List<Listener<?>> handlers = new ArrayList<>();
+        List<Handler<?>> handlers = new ArrayList<>();
         while (Event.class.isAssignableFrom(type)) {
-            // Put them at the beginning so superclasses get called first
-            List<Listener<?>> set = listeners.get(type);
-            if (set != null)
-                handlers.addAll(0, set);
+            for (HandlerSet handlerSet : listenerHandlers.values()) {
+                // Put them at the beginning so superclasses get called first
+                List<Handler<?>> set = handlerSet.handlers.get(type);
+                if (set != null)
+                    handlers.addAll(0, set);
+            }
+
+            List<Handler<?>> def = defaultHandlerSet.handlers.get(type);
+            if (def != null)
+                handlers.addAll(0, def);
 
             type = type.getSuperclass();
         }
@@ -53,41 +69,32 @@ public final class EventBus {
         handlers.sort(Comparator.naturalOrder());
 
         // Call them
-        for (Listener<?> listener : handlers) {
+        for (Handler<?> handler : handlers) {
             if (event.isCancelled())
                 break;
 
-            // Safety: listeners maps from event type to listeners of that type
             @SuppressWarnings("unchecked")
-            Listener<? super E> eListener = (Listener<? super E>) listener;
+            Handler<? super E> eHandler = (Handler<? super E>) handler;
 
-            eListener.listener.accept(event);
+            eHandler.handler.accept(event);
         }
     }
 
-    /**
-     * Registers a listener to receive events with
-     * {@link EventPriority#NORMAL} priority. The handler will be called for
-     * events of the specified type or of subclasses of that type.
-     *
-     * @param type type of event to listen for
-     * @param handler listener to register
-     */
-    public <E extends Event> void addListener(Class<E> type, Consumer<E> handler) {
-        addListener(type, EventPriority.NORMAL, handler);
+    public void addListener(EventListener listener) {
+        HandlerSet handlerSet = new HandlerSet();
+        listener.registerEventHandlers(handlerSet);
+        listenerHandlers.put(listener, handlerSet);
     }
 
-    /**
-     * Registers a listener to receive events with the specified priority. The
-     * handler will be called for events of the specified type or of subclasses
-     * of that type.
-     *
-     * @param type type of event to listen for
-     * @param priority priority of the listener
-     * @param handler listener to register
-     */
-    public <E extends Event> void addListener(Class<E> type, EventPriority priority, Consumer<E> handler) {
-        listeners.computeIfAbsent(type, (t) -> new ArrayList<>())
-                .add(new Listener<>(handler, priority));
+    public void removeListener(EventListener listener) {
+        listenerHandlers.remove(listener);
+    }
+
+    public <E extends Event> void addHandler(Class<E> type, Consumer<E> handler) {
+        addHandler(type, EventPriority.NORMAL, handler);
+    }
+
+    public <E extends Event> void addHandler(Class<E> type, EventPriority priority, Consumer<E> handler) {
+        defaultHandlerSet.register(type, priority, handler);
     }
 }
