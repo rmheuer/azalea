@@ -10,8 +10,18 @@ public enum CubeFace {
     POS_Z(Axis.Z, 0, 0, 1),
     NEG_Z(Axis.Z, 0, 0, -1);
 
+    static {
+        POS_X.reverse = NEG_X;
+        NEG_X.reverse = POS_X;
+        POS_Y.reverse = NEG_Y;
+        NEG_Y.reverse = POS_Y;
+        POS_Z.reverse = NEG_Z;
+        NEG_Z.reverse = POS_Z;
+    }
+
     public final Axis axis;
     public final int x, y, z;
+    private CubeFace reverse;
 
     CubeFace(Axis axis, int x, int y, int z) {
         this.axis = axis;
@@ -22,5 +32,9 @@ public enum CubeFace {
 
     public Vector3i getDirection() {
         return new Vector3i(x, y, z);
+    }
+
+    public CubeFace getReverse() {
+        return reverse;
     }
 }
