@@ -52,18 +52,24 @@ public final class AtlasMipMapGenerator {
 
     private static int averageColors(ColorFormat format, int a, int b, int c, int d) {
         if (format == ColorFormat.GRAYSCALE) {
-            return average(a, b, c, d);
+            return (int) average(a, b, c, d);
         } else {
+            int aa = RGBA.getAlpha(a);
+            int ab = RGBA.getAlpha(b);
+            int ac = RGBA.getAlpha(c);
+            int ad = RGBA.getAlpha(d);
+            float alpha = average(aa, ab, ac, ad);
+
             return RGBA.fromInts(
-                    average(RGBA.getRed(a), RGBA.getRed(b), RGBA.getRed(c), RGBA.getRed(d)),
-                    average(RGBA.getGreen(a), RGBA.getGreen(b), RGBA.getGreen(c), RGBA.getGreen(d)),
-                    average(RGBA.getBlue(a), RGBA.getBlue(b), RGBA.getBlue(c), RGBA.getBlue(d)),
-                    average(RGBA.getAlpha(a), RGBA.getAlpha(b), RGBA.getAlpha(c), RGBA.getAlpha(d))
+                    (int) (average(RGBA.getRed(a) * aa, RGBA.getRed(b) * ab, RGBA.getRed(c) * ac, RGBA.getRed(d) * ad) / alpha),
+                    (int) (average(RGBA.getGreen(a) * aa, RGBA.getGreen(b) * ab, RGBA.getGreen(c) * ac, RGBA.getGreen(d) * ad) / alpha),
+                    (int) (average(RGBA.getBlue(a) * aa, RGBA.getBlue(b) * ab, RGBA.getBlue(c) * ac, RGBA.getBlue(d) * ad) / alpha),
+                    (int) alpha
             );
         }
     }
 
-    private static int average(int a, int b, int c, int d) {
-        return (a + b + c + d) / 4;
+    private static float average(int a, int b, int c, int d) {
+        return (a + b + c + d) / 4.0f;
     }
 }
