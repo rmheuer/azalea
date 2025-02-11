@@ -109,12 +109,25 @@ public final class VertexArrayManager implements SafeCloseable {
         state.bindArrayBuffer(vbo);
         for (int i = 0; i < attribs.length; i++) {
             AttribType type = attribs[i];
-            glVertexAttribPointer(i,
-                    type.getElemCount(),
-                    type.getValueType() == AttribType.ValueType.FLOAT ? GL_FLOAT : GL_UNSIGNED_BYTE,
-                    type.isNormalized(),
-                    stride,
-                    offset);
+            AttribType.ValueType valueType = type.getValueType();
+            if (valueType == AttribType.ValueType.INT || valueType == AttribType.ValueType.UINT) {
+                glVertexAttribIPointer(
+                        i,
+                        type.getElemCount(),
+                        valueType == AttribType.ValueType.INT ? GL_INT : GL_UNSIGNED_INT,
+                        stride,
+                        offset
+                );
+            } else {
+                glVertexAttribPointer(
+                        i,
+                        type.getElemCount(),
+                        valueType == AttribType.ValueType.FLOAT ? GL_FLOAT : GL_UNSIGNED_BYTE,
+                        type.isNormalized(),
+                        stride,
+                        offset
+                );
+            }
             glEnableVertexAttribArray(i);
             offset += type.sizeOf();
         }

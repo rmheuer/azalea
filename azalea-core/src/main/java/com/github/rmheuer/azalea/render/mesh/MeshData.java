@@ -148,6 +148,14 @@ public final class MeshData implements SafeCloseable {
         vertices.putFloat(f);
     }
 
+    public void putInt(int i) {
+        vertices.putInt(i);
+    }
+
+    public void putUint(int i) {
+        vertices.putUint(i);
+    }
+
     public void putVec2(Vector2fc v) {
         vertices.putVec2(v);
     }

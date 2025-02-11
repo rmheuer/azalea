@@ -87,6 +87,16 @@ public final class VertexData implements SafeCloseable {
         data.putFloat(f);
     }
 
+    public void putInt(int i) {
+        prepare(AttribType.INT);
+        data.putInt(i);
+    }
+
+    public void putUint(int i) {
+        prepare(AttribType.UINT);
+        data.putInt(i);
+    }
+
     public void putVec2(Vector2fc v) {
         putVec2(v.x(), v.y());
     }

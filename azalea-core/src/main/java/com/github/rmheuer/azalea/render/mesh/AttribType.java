@@ -8,6 +8,10 @@ import com.github.rmheuer.azalea.utils.SizeOf;
 public enum AttribType {
     /** GLSL {@code float} */
     FLOAT(1, ValueType.FLOAT, false),
+    /** GLSL {@code int} */
+    INT(1, ValueType.INT, false),
+    /** GLSL {@code uint} */
+    UINT(1, ValueType.UINT, false),
     /** GLSL {@code vec2} */
     VEC2(2, ValueType.FLOAT, false),
     /** GLSL {@code vec3} */
@@ -19,6 +23,8 @@ public enum AttribType {
 
     public enum ValueType {
         FLOAT(SizeOf.FLOAT),
+        INT(SizeOf.INT),
+        UINT(SizeOf.INT),
         BYTE(SizeOf.BYTE);
 
         private final int sizeOf;
