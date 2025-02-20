@@ -38,8 +38,6 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
      * @param settings settings for the window to create
      */
     public GlfwWindow(WindowSettings settings) {
-        preInit();
-
         if (!glfwInit())
             throw new RuntimeException("Failed to init GLFW!");
 
@@ -71,8 +69,6 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
         glfwPollEvents();
         cursorPos = getCurrentCursorPos();
     }
-
-    protected abstract void preInit();
 
     /**
      * Sets the window hints for the graphics context.

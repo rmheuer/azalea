@@ -3,7 +3,6 @@ package com.github.rmheuer.azalea.render.opengl;
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.WindowSettings;
 import com.github.rmheuer.azalea.render.glfw.GlfwWindow;
-import org.lwjgl.glfw.GLFWNativeGLX;
 import org.lwjgl.opengl.GL;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -13,13 +12,6 @@ public final class OpenGLWindow extends GlfwWindow {
 
     public OpenGLWindow(WindowSettings settings) {
         super(settings);
-    }
-
-    @Override
-    protected void preInit() {
-        if (glfwPlatformSupported(GLFW_PLATFORM_X11)) {
-            GLFWNativeGLX.setPath(GL.getFunctionProvider());
-        }
     }
 
     @Override
