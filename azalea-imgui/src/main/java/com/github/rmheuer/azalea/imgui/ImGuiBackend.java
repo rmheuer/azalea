@@ -8,6 +8,7 @@ import com.github.rmheuer.azalea.input.keyboard.KeyboardEvent;
 import com.github.rmheuer.azalea.input.mouse.MouseEvent;
 import com.github.rmheuer.azalea.render.Window;
 import com.github.rmheuer.azalea.render.glfw.GlfwWindow;
+import com.github.rmheuer.azalea.render.texture.Texture2D;
 import com.github.rmheuer.azalea.utils.SafeCloseable;
 import imgui.ImGui;
 import imgui.ImGuiIO;
@@ -85,6 +86,10 @@ public final class ImGuiBackend implements EventListener, SafeCloseable {
      */
     public Keyboard getMaskedKeyboard() {
         return maskedKeyboard;
+    }
+
+    public int getIdForTexture(Texture2D tex) {
+        return frameTextures.getIdForTexture(tex);
     }
 
     @Override
