@@ -19,10 +19,23 @@ import com.github.rmheuer.azalea.render.texture.Texture2D;
 import com.github.rmheuer.azalea.render.texture.TextureCubeMap;
 import com.github.rmheuer.azalea.utils.SizeOf;
 import org.joml.Vector2i;
+import org.lwjgl.opengl.GLUtil;
+import org.lwjgl.system.Callback;
 
 import static org.lwjgl.opengl.GL33C.*;
 
 public final class OpenGLRenderer implements Renderer {
+    private static boolean debugEnabled = false;
+
+    public static void enableDebug() {
+	debugEnabled = true;
+    }
+
+    public static boolean isDebugEnabled() {
+	return debugEnabled;
+    }
+
+    private final Callback debugCallback;
     private final GLStateManager state;
     private boolean pipelineActive = false;
 
@@ -50,6 +63,12 @@ public final class OpenGLRenderer implements Renderer {
                 throw new UnsupportedOperationException("Cannot close default framebuffer");
             }
         };
+
+	if (debugEnabled) {
+	    debugCallback = GLUtil.setupDebugMessageCallback(System.err);
+	} else {
+	    debugCallback = null;
+	}
     }
 
     @Override
@@ -197,6 +216,9 @@ public final class OpenGLRenderer implements Renderer {
     @Override
     public void close() {
         state.close();
+	if (debugCallback != null) {
+	    debugCallback.free();
+	}
     }
 
     private final class ActivePipelineImpl implements ActivePipeline {
