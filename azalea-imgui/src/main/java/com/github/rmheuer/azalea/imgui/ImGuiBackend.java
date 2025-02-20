@@ -88,14 +88,14 @@ public final class ImGuiBackend implements EventListener, SafeCloseable {
         return maskedKeyboard;
     }
 
-    public int getIdForTexture(Texture2D tex) {
+    public long getIdForTexture(Texture2D tex) {
         return frameTextures.getIdForTexture(tex);
     }
 
     @Override
     public void close() {
         renderBackend.close();
-        implGlfw.dispose();
+        implGlfw.shutdown();
         ImGui.destroyContext();
     }
 }

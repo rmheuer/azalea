@@ -12,7 +12,7 @@
     <artifactId>azalea-imgui</artifactId>
 
     <properties>
-        <imgui.java.version>1.86.10</imgui.java.version>
+        <imgui.java.version>1.89.0</imgui.java.version>
     </properties>
 
     <dependencies>
@@ -31,6 +31,12 @@
             <groupId>io.github.spair</groupId>
             <artifactId>imgui-java-lwjgl3</artifactId>
             <version>${imgui.java.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.lwjgl</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.github.spair</groupId>

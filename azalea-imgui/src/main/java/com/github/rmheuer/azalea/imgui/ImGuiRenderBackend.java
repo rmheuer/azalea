@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public final class ImGuiRenderBackend implements SafeCloseable {
-    private static final int FONT_TEXTURE_ID = -1;
+    private static final long FONT_TEXTURE_ID = -1;
 
     private static final VertexLayout VERTEX_LAYOUT = new VertexLayout(
             AttribType.VEC2, // Position
@@ -120,7 +120,7 @@ public final class ImGuiRenderBackend implements SafeCloseable {
                 );
 
                 for (int cmdBufferIdx = 0; cmdBufferIdx < drawData.getCmdListCmdBufferSize(cmdListIdx); cmdBufferIdx++) {
-                    drawData.getCmdListCmdBufferClipRect(cmdListIdx, cmdBufferIdx, clipRect);
+                    drawData.getCmdListCmdBufferClipRect(clipRect, cmdListIdx, cmdBufferIdx);
 
                     float clipMinX = (clipRect.x - clipOffX) * clipScaleX;
                     float clipMinY = (clipRect.y - clipOffY) * clipScaleY;
@@ -131,7 +131,7 @@ public final class ImGuiRenderBackend implements SafeCloseable {
 
                     renderer.setClipRect((int) clipMinX, (int) (fbHeight - clipMaxY), (int) (clipMaxX - clipMinX), (int) (clipMaxY - clipMinY));
 
-                    int texId = drawData.getCmdListCmdBufferTextureId(cmdListIdx, cmdBufferIdx);
+                    long texId = drawData.getCmdListCmdBufferTextureId(cmdListIdx, cmdBufferIdx);
                     if (texId == FONT_TEXTURE_ID)
                         pipe.bindTexture(0, fontTexture);
                     else

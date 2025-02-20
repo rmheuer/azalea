@@ -16,7 +16,7 @@ public final class FrameTextures {
         frameTextures.clear();
     }
 
-    public int getIdForTexture(Texture2D tex) {
+    public long getIdForTexture(Texture2D tex) {
         int index = frameTextures.indexOf(tex);
         if (index > 0)
             return index;
@@ -26,7 +26,7 @@ public final class FrameTextures {
         return index;
     }
 
-    public Texture2D getTexture(int id) {
-        return frameTextures.get(id);
+    public Texture2D getTexture(long id) {
+        return frameTextures.get((int) id);
     }
 }
