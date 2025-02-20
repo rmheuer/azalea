@@ -6,6 +6,7 @@ import com.github.rmheuer.azalea.render.glfw.GlfwWindow;
 import org.lwjgl.opengl.GL;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL33C.*;
 
 public final class OpenGLWindow extends GlfwWindow {
     private OpenGLRenderer renderer;
@@ -32,6 +33,11 @@ public final class OpenGLWindow extends GlfwWindow {
 	
         GL.createCapabilities(true);
         renderer = new OpenGLRenderer(this);
+
+        System.out.println("GL vendor: " + glGetString(GL_VENDOR));
+        System.out.println("GL renderer: " + glGetString(GL_RENDERER));
+        System.out.println("GL version: " + glGetString(GL_VERSION));
+        System.out.println("GLSL version: " + glGetString(GL_SHADING_LANGUAGE_VERSION));
     }
 
     @Override
