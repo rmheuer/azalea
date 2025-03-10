@@ -79,7 +79,16 @@ public final class MathUtil {
      * @return next power of two
      */
     public static int nextPowerOf2(int i) {
-        return i == 1 ? 1 : Integer.highestOneBit(i - 1) * 2;
+        // http://graphics.stanford.edu/%7Eseander/bithacks.html#RoundUpPowerOf2
+        i--;
+        i |= i >> 1;
+        i |= i >> 2;
+        i |= i >> 4;
+        i |= i >> 8;
+        i |= i >> 16;
+        i++;
+
+        return i;
     }
 
     /**
