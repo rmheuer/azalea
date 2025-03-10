@@ -46,15 +46,26 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
         glfwWindowHint(GLFW_RESIZABLE, settings.isResizable() ? GLFW_TRUE : GLFW_FALSE);
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
+        int width = settings.getWidth();
+        int height = settings.getHeight();
+        long monitor = NULL;
+
+        // Try to set fullscreen on primary monitor, and fall back to windowed
+        // if it fails
         if (settings.isFullScreen()) {
-            // FIXME: both glfwGetPrimaryMonitor() and glfwGetVideoMode() could fail
-            long monitor = glfwGetPrimaryMonitor();
-            GLFWVidMode vidMode = glfwGetVideoMode(monitor);
-            handle = glfwCreateWindow(vidMode.width(), vidMode.height(), settings.getTitle(), monitor, NULL);
-        } else {
-            handle = glfwCreateWindow(settings.getWidth(), settings.getHeight(), settings.getTitle(), NULL, NULL);
+            monitor = glfwGetPrimaryMonitor();
+            if (monitor != NULL) {
+                GLFWVidMode vidMode = glfwGetVideoMode(monitor);
+                if (vidMode != null) {
+                    width = vidMode.width();
+                    height = vidMode.height();
+                } else {
+                    monitor = NULL;
+                }
+            }
         }
 
+        handle = glfwCreateWindow(width, height, settings.getTitle(), monitor, NULL);
         if (handle == NULL) {
             throw new RuntimeException("Failed to create window");
         }
