@@ -38,8 +38,9 @@ public final class PipelineInfo {
         return this;
     }
 
-    public void setDepthFunc(DepthFunc depthFunc) {
+    public PipelineInfo setDepthFunc(DepthFunc depthFunc) {
         this.depthFunc = depthFunc;
+        return this;
     }
 
     public PipelineInfo setCullMode(CullMode cullMode) {
