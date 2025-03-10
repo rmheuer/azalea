@@ -1,4 +1,4 @@
-package com.github.rmheuer.azalea.render.util;
+package com.github.rmheuer.azalea.render.utils;
 
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.mesh.DataUsage;

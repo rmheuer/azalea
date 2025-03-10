@@ -1,4 +1,4 @@
-package com.github.rmheuer.azalea.render.util;
+package com.github.rmheuer.azalea.render.utils;
 
 import com.github.rmheuer.azalea.io.ResourceUtil;
 import com.github.rmheuer.azalea.math.MathUtil;
