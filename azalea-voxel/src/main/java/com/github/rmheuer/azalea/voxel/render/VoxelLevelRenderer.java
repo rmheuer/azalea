@@ -3,6 +3,7 @@ package com.github.rmheuer.azalea.voxel.render;
 import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.mesh.*;
 import com.github.rmheuer.azalea.render.pipeline.ActivePipeline;
+import com.github.rmheuer.azalea.render.utils.SharedIndexBuffer;
 import com.github.rmheuer.azalea.utils.SafeCloseable;
 import com.github.rmheuer.azalea.voxel.level.LevelListener;
 import com.github.rmheuer.azalea.voxel.level.VoxelLevel;
@@ -14,45 +15,6 @@ import org.joml.Vector3i;
 import java.util.*;
 
 public abstract class VoxelLevelRenderer<B> implements SafeCloseable {
-    private static final class SharedIndexBuffer implements SafeCloseable {
-        public final IndexBuffer indexBuffer;
-        private int capacity;
-
-        public SharedIndexBuffer(Renderer renderer, int initialFaces) {
-            indexBuffer = renderer.createIndexBuffer();
-            ensureCapacity(initialFaces);
-        }
-
-        private void updateIndices(int faceCount) {
-            try (IndexData data = new IndexData(PrimitiveType.TRIANGLES)) {
-                data.reserve(faceCount * 6);
-                for (int i = 0; i < faceCount; i++) {
-                    int vtxBase = i * 4;
-                    data.putIndex(vtxBase);
-                    data.putIndex(vtxBase + 1);
-                    data.putIndex(vtxBase + 2);
-                    data.putIndex(vtxBase);
-                    data.putIndex(vtxBase + 2);
-                    data.putIndex(vtxBase + 3);
-                }
-
-                indexBuffer.setData(data, DataUsage.STATIC);
-                capacity = faceCount;
-            }
-        }
-
-        public void ensureCapacity(int faceCount) {
-            if (faceCount > capacity) {
-                updateIndices(faceCount);
-            }
-        }
-
-        @Override
-        public void close() {
-            indexBuffer.close();
-        }
-    }
-
     private static final class SectionData implements SafeCloseable {
         private final VertexBuffer buffer;
         private int elementCount;
@@ -192,7 +154,12 @@ public abstract class VoxelLevelRenderer<B> implements SafeCloseable {
         // Worst case for simple cube voxels, with entire section filled with
         // checkerboard pattern.
         int initialCapacity = sectionSize * sectionSize * sectionSize * 3;
-        sharedIndexBuffer = new SharedIndexBuffer(renderer, initialCapacity);
+        sharedIndexBuffer = new SharedIndexBuffer(
+                renderer,
+                PrimitiveType.TRIANGLES,
+                4,
+                0, 1, 2, 0, 2, 3
+        );
 
         this.sectionSize = sectionSize;
         levelData = null;
@@ -270,7 +237,7 @@ public abstract class VoxelLevelRenderer<B> implements SafeCloseable {
         for (Vector3i pos : toRender) {
             SectionData section = levelData.getSection(pos);
             if (section != null && section.elementCount > 0) {
-                renderPipeline.draw(section.buffer, sharedIndexBuffer.indexBuffer, 0, section.elementCount);
+                renderPipeline.draw(section.buffer, sharedIndexBuffer.getIndexBuffer(), 0, section.elementCount);
             }
         }
     }
