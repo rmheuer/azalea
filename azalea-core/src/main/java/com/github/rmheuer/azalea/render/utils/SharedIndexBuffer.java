@@ -13,6 +13,7 @@ public final class SharedIndexBuffer implements SafeCloseable {
     private final int[] pattern;
 
     private final IndexBuffer indexBuffer;
+    private int capacity;
 
     public SharedIndexBuffer(Renderer renderer, PrimitiveType primitiveType, int verticesPerRepetition, int... pattern) {
         this.primitiveType = primitiveType;
@@ -20,9 +21,13 @@ public final class SharedIndexBuffer implements SafeCloseable {
         this.pattern = pattern;
 
         indexBuffer = renderer.createIndexBuffer();
+        capacity = 0;
     }
 
     public void ensureCapacity(int repetitions) {
+        if (repetitions <= capacity)
+            return;
+
         try (IndexData data = new IndexData(primitiveType)) {
             data.reserve(repetitions * pattern.length);
             for (int i = 0; i < repetitions; i++) {
@@ -31,6 +36,8 @@ public final class SharedIndexBuffer implements SafeCloseable {
 
             indexBuffer.setData(data, DataUsage.STATIC);
         }
+
+        capacity = repetitions;
     }
 
     public IndexBuffer getIndexBuffer() {
