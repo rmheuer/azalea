@@ -12,6 +12,20 @@ public final class AABB {
         );
     }
 
+    public static AABB fromCenterSize(float centerX, float centerY, float centerZ, float width, float height, float depth) {
+        float halfW = width / 2;
+        float halfH = height / 2;
+        float halfD = depth / 2;
+        return new AABB(
+                centerX - halfW,
+                centerY - halfH,
+                centerZ - halfD,
+                centerX + halfW,
+                centerY + halfH,
+                centerZ + halfD
+        );
+    }
+
     public final float minX, minY, minZ;
     public final float maxX, maxY, maxZ;
 
