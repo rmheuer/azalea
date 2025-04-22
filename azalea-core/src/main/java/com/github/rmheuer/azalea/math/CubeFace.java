@@ -9,6 +9,15 @@ public enum CubeFace {
     NEG_Y(Axis.Y, 0, -1, 0),
     POS_Z(Axis.Z, 0, 0, 1),
     NEG_Z(Axis.Z, 0, 0, -1);
+    
+    private static final CubeFace[] HORIZONTAL = {
+            POS_X, NEG_X,
+            POS_Y, NEG_Y
+    };
+
+    public static CubeFace[] horizontal() {
+        return HORIZONTAL.clone();
+    }
 
     static {
         POS_X.reverse = NEG_X;
