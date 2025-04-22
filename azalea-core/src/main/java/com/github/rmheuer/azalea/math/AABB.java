@@ -91,9 +91,9 @@ public final class AABB {
     }
 
     public boolean intersectsIgnoringAxis(AABB other, Axis ignoredAxis) {
-        boolean x = (minX <= other.maxX && maxX >= other.minX);
-        boolean y = (minY <= other.maxY && maxY >= other.minY);
-        boolean z = (minZ <= other.maxZ && maxZ >= other.minZ);
+        boolean x = (minX < other.maxX && maxX > other.minX);
+        boolean y = (minY < other.maxY && maxY > other.minY);
+        boolean z = (minZ < other.maxZ && maxZ > other.minZ);
 
         switch (ignoredAxis) {
             case X: return y && z;
@@ -102,5 +102,23 @@ public final class AABB {
             default:
                 throw new IndexOutOfBoundsException(String.valueOf(ignoredAxis));
         }
+    }
+
+    public float collideAlongAxis(AABB other, Axis axis, float movement) {
+        if (!intersectsIgnoringAxis(other, axis))
+            return movement;
+
+        float min = getMin(axis);
+        float max = getMax(axis);
+        float otherMin = other.getMin(axis);
+        float otherMax = other.getMax(axis);
+        if (movement > 0 && otherMin >= max) {
+            movement = Math.min(movement, otherMin - max);
+        }
+        if (movement < 0 && otherMax <= min) {
+            movement = Math.max(movement, otherMax - min);
+        }
+
+        return movement;
     }
 }
