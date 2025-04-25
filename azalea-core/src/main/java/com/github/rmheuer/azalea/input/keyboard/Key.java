@@ -11,16 +11,16 @@ public enum Key {
     MINUS("Minus"),
     PERIOD("Period"),
     SLASH("Slash"),
-    ZERO("Zero"),
-    ONE("One"),
-    TWO("Two"),
-    THREE("Three"),
-    FOUR("Four"),
-    FIVE("Five"),
-    SIX("Six"),
-    SEVEN("Seven"),
-    EIGHT("Eight"),
-    NINE("Nine"),
+    ZERO("Zero", 0),
+    ONE("One", 1),
+    TWO("Two", 2),
+    THREE("Three", 3),
+    FOUR("Four", 4),
+    FIVE("Five", 5),
+    SIX("Six", 6),
+    SEVEN("Seven", 7),
+    EIGHT("Eight", 8),
+    NINE("Nine", 9),
     SEMICOLON("Semicolon"),
     EQUALS("Equals"),
     A("A"),
@@ -98,16 +98,16 @@ public enum Key {
     F23("F23"),
     F24("F24"),
     F25("F25"),
-    NUMPAD_ZERO("Numpad Zero"),
-    NUMPAD_ONE("Numpad One"),
-    NUMPAD_TWO("Numpad Two"),
-    NUMPAD_THREE("Numpad Three"),
-    NUMPAD_FOUR("Numpad Four"),
-    NUMPAD_FIVE("Numpad Five"),
-    NUMPAD_SIX("Numpad Six"),
-    NUMPAD_SEVEN("Numpad Seven"),
-    NUMPAD_EIGHT("Numpad Eight"),
-    NUMPAD_NINE("Numpad Nine"),
+    NUMPAD_ZERO("Numpad Zero", 0),
+    NUMPAD_ONE("Numpad One", 1),
+    NUMPAD_TWO("Numpad Two", 2),
+    NUMPAD_THREE("Numpad Three", 3),
+    NUMPAD_FOUR("Numpad Four", 4),
+    NUMPAD_FIVE("Numpad Five", 5),
+    NUMPAD_SIX("Numpad Six", 6),
+    NUMPAD_SEVEN("Numpad Seven", 7),
+    NUMPAD_EIGHT("Numpad Eight", 8),
+    NUMPAD_NINE("Numpad Nine", 9),
     NUMPAD_DECIMAL("Numpad Decimal Point"),
     NUMPAD_DIVIDE("Numpad Divide"),
     NUMPAD_MULTIPLY("Numpad Multiply"),
@@ -126,9 +126,15 @@ public enum Key {
     MENU("Menu");
 
     private final String name;
+    private final int number;
 
     Key(String name) {
+        this(name, -1);
+    }
+
+    Key(String name, int number) {
         this.name = name;
+        this.number = number;
     }
 
     /**
@@ -138,5 +144,24 @@ public enum Key {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * Gets the numerical value of this key, or -1 if this is not a number key.
+     *
+     * @return number of key
+     */
+    public int getNumber() {
+        return number;
+    }
+
+    /**
+     * Gets whether this key is a number key. This includes both the standard
+     * digit keys and the numpad.
+     *
+     * @return whether this is a number key
+     */
+    public boolean isNumberKey() {
+        return number != -1;
     }
 }
