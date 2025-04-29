@@ -1,7 +1,6 @@
 package com.github.rmheuer.azalea.math;
 
 import org.joml.Vector3f;
-import org.joml.Vector3i;
 
 public final class AABB {
     public static AABB fromBaseCenterSize(float centerX, float minY, float centerZ, float width, float height, float depth) {
