@@ -1,5 +1,8 @@
 package com.github.rmheuer.azalea.math;
 
+import org.joml.Vector3f;
+import org.joml.Vector3i;
+
 public final class AABB {
     public static AABB fromBaseCenterSize(float centerX, float minY, float centerZ, float width, float height, float depth) {
         return new AABB(
@@ -120,5 +123,55 @@ public final class AABB {
         }
 
         return movement;
+    }
+
+    public static final class RayIntersection {
+        public final float hitDist;
+        public final Vector3f hitPos;
+        public final CubeFace hitFace;
+
+        public RayIntersection(float hitDist, Vector3f hitPos, CubeFace hitFace) {
+            this.hitDist = hitDist;
+            this.hitPos = hitPos;
+            this.hitFace = hitFace;
+        }
+    }
+
+    public RayIntersection intersectRay(Vector3f origin, Vector3f dir) {
+        float tx1 = (minX - origin.x) / dir.x;
+        float tx2 = (maxX - origin.x) / dir.x;
+        float txMin = Math.min(tx1, tx2);
+        float txMax = Math.max(tx1, tx2);
+
+        float ty1 = (minY - origin.y) / dir.y;
+        float ty2 = (maxY - origin.y) / dir.y;
+        float tyMin = Math.min(ty1, ty2);
+        float tyMax = Math.max(ty1, ty2);
+
+        float tz1 = (minZ - origin.z) / dir.z;
+        float tz2 = (maxZ - origin.z) / dir.z;
+        float tzMin = Math.min(tz1, tz2);
+        float tzMax = Math.max(tz1, tz2);
+
+        CubeFace face;
+        float tMin;
+        if (txMin > tyMin && txMin > tzMin) {
+            tMin = txMin;
+            face = dir.x < 0 ? CubeFace.POS_X : CubeFace.NEG_X;
+        } else if (tyMin > txMin && tyMin > tzMin) {
+            tMin = tyMin;
+            face = dir.y < 0 ? CubeFace.POS_Y : CubeFace.NEG_Y;
+        } else {
+            tMin = tzMin;
+            face = dir.z < 0 ? CubeFace.POS_Z : CubeFace.NEG_Z;
+        }
+
+        float tMax = Math.min(Math.min(txMax, tyMax), tzMax);
+
+        if (tMax > Math.max(tMin, 0)) {
+            return new RayIntersection(tMin, new Vector3f(origin).fma(tMin, dir), face);
+        } else {
+            return null;
+        }
     }
 }
