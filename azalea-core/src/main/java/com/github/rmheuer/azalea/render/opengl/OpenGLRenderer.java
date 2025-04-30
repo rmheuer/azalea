@@ -6,11 +6,7 @@ import com.github.rmheuer.azalea.render.framebuffer.FramebufferBuilder;
 import com.github.rmheuer.azalea.render.mesh.IndexBuffer;
 import com.github.rmheuer.azalea.render.mesh.PrimitiveType;
 import com.github.rmheuer.azalea.render.mesh.VertexBuffer;
-import com.github.rmheuer.azalea.render.pipeline.ActivePipeline;
-import com.github.rmheuer.azalea.render.pipeline.CullMode;
-import com.github.rmheuer.azalea.render.pipeline.FaceWinding;
-import com.github.rmheuer.azalea.render.pipeline.FillMode;
-import com.github.rmheuer.azalea.render.pipeline.PipelineInfo;
+import com.github.rmheuer.azalea.render.pipeline.*;
 import com.github.rmheuer.azalea.render.shader.ShaderProgram;
 import com.github.rmheuer.azalea.render.shader.ShaderStage;
 import com.github.rmheuer.azalea.render.shader.ShaderUniform;
@@ -103,6 +99,34 @@ public final class OpenGLRenderer implements Renderer {
         glClear(bits);
     }
 
+    private int getGlBlendEquation(BlendOp op) {
+        switch (op) {
+            case ADD: return GL_FUNC_ADD;
+            case SUBTRACT: return GL_FUNC_SUBTRACT;
+            case REVERSE_SUBTRACT: return GL_FUNC_REVERSE_SUBTRACT;
+            case MIN: return GL_MIN;
+            case MAX: return GL_MAX;
+            default: throw new IllegalArgumentException("Unknown blend op: " + op);
+        }
+    }
+
+    private int getGlBlendFactor(BlendFactor factor) {
+        switch (factor) {
+            case ZERO: return GL_ZERO;
+            case ONE: return GL_ONE;
+            case SRC_COLOR: return GL_SRC_COLOR;
+            case ONE_MINUS_SRC_COLOR: return GL_ONE_MINUS_SRC_COLOR;
+            case DST_COLOR: return GL_DST_COLOR;
+            case ONE_MINUS_DST_COLOR: return GL_ONE_MINUS_DST_COLOR;
+            case SRC_ALPHA: return GL_SRC_ALPHA;
+            case ONE_MINUS_SRC_ALPHA: return GL_ONE_MINUS_SRC_ALPHA;
+            case DST_ALPHA: return GL_DST_ALPHA;
+            case ONE_MINUS_DST_ALPHA: return GL_ONE_MINUS_DST_ALPHA;
+            default:
+                throw new IllegalArgumentException("Unknown blend factor: " + factor);
+        }
+    }
+
     @Override
     public ActivePipeline bindPipeline(PipelineInfo pipeline, Framebuffer framebuffer) {
         if (pipelineActive)
@@ -120,10 +144,21 @@ public final class OpenGLRenderer implements Renderer {
         OpenGLShaderProgram shader = (OpenGLShaderProgram) pipeline.getShader();
         shader.bind();
 
-        boolean blend = pipeline.isBlend();
-        state.setBlendEnabled(blend);
-        if (blend)
-            state.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if (pipeline.isBlend()) {
+            state.setBlendEnabled(true);
+            state.setBlendEquations(
+                    getGlBlendEquation(pipeline.getBlendOpRGB()),
+                    getGlBlendEquation(pipeline.getBlendOpAlpha())
+            );
+            state.setBlendFunc(
+                    getGlBlendFactor(pipeline.getBlendSrcRGBFactor()),
+                    getGlBlendFactor(pipeline.getBlendDstRGBFactor()),
+                    getGlBlendFactor(pipeline.getBlendSrcAlphaFactor()),
+                    getGlBlendFactor(pipeline.getBlendDstAlphaFactor())
+            );
+        } else {
+            state.setBlendEnabled(false);
+        }
 
         state.setScissorEnabled(pipeline.isClip());
 

@@ -34,8 +34,12 @@ public final class GLStateManager implements SafeCloseable {
     private final Vector4f clearColor = new Vector4f(0, 0, 0, 0);
     private final Vector4i viewport;
     private final Vector4i clipRect;
-    private int blendFuncSrcFactor = GL_ONE;
-    private int blendFuncDstFactor = GL_ZERO;
+    private int blendEquationRGB = GL_FUNC_ADD;
+    private int blendEquationAlpha = GL_FUNC_ADD;
+    private int blendFuncSrcRGBFactor = GL_ONE;
+    private int blendFuncDstRGBFactor = GL_ZERO;
+    private int blendFuncSrcAlphaFactor = GL_ONE;
+    private int blendFuncDstAlphaFactor = GL_ZERO;
     private int depthFunc = GL_LESS;
     private int cullFace = GL_BACK;
     private int frontFace = GL_CCW;
@@ -145,11 +149,22 @@ public final class GLStateManager implements SafeCloseable {
         }
     }
 
-    public void setBlendFunc(int srcFactor, int dstFactor) {
-        if (blendFuncSrcFactor != srcFactor || blendFuncDstFactor != dstFactor) {
-            glBlendFunc(srcFactor, dstFactor);
-            blendFuncSrcFactor = srcFactor;
-            blendFuncDstFactor = dstFactor;
+    public void setBlendEquations(int rgb, int alpha) {
+        if (blendEquationRGB != rgb || blendEquationAlpha != alpha) {
+            glBlendEquationSeparate(rgb, alpha);
+            blendEquationRGB = rgb;
+            blendEquationAlpha = alpha;
+        }
+    }
+
+    public void setBlendFunc(int srcRGB, int dstRGB, int srcAlpha, int dstAlpha) {
+        if (blendFuncSrcRGBFactor != srcRGB || blendFuncDstRGBFactor != dstRGB ||
+                blendFuncSrcAlphaFactor != srcAlpha || blendFuncDstAlphaFactor != dstAlpha) {
+            glBlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
+            blendFuncSrcRGBFactor = srcRGB;
+            blendFuncDstRGBFactor = dstRGB;
+            blendFuncSrcAlphaFactor = srcAlpha;
+            blendFuncDstAlphaFactor = dstAlpha;
         }
     }
 

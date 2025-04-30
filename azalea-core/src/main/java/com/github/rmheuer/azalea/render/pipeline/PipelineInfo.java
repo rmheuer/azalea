@@ -5,9 +5,12 @@ import com.github.rmheuer.azalea.render.shader.ShaderProgram;
 public final class PipelineInfo {
     private final ShaderProgram shader;
     private boolean clip;
-    private boolean blend;
-    private boolean depthTest;
+    private boolean depthTest; // TODO: Merge into DepthFunc enum
     private DepthFunc depthFunc;
+    private boolean blend;
+    private BlendOp blendOpRGB, blendOpAlpha;
+    private BlendFactor blendSrcRGBFactor, blendDstRGBFactor;
+    private BlendFactor blendSrcAlphaFactor, blendDstAlphaFactor;
     private CullMode cullMode;
     private FaceWinding winding;
     private FillMode fillMode;
@@ -15,9 +18,12 @@ public final class PipelineInfo {
     public PipelineInfo(ShaderProgram shader) {
         this.shader = shader;
         clip = false;
-        blend = true;
         depthTest = false;
         depthFunc = DepthFunc.LESS_OR_EQUAL;
+        blend = true;
+        blendOpRGB = blendOpAlpha = BlendOp.ADD;
+        blendSrcRGBFactor = blendSrcAlphaFactor = BlendFactor.SRC_ALPHA;
+        blendDstRGBFactor = blendDstAlphaFactor = BlendFactor.ONE_MINUS_SRC_ALPHA;
         cullMode = CullMode.OFF;
         winding = FaceWinding.CW_FRONT;
         fillMode = FillMode.FILLED;
@@ -28,11 +34,6 @@ public final class PipelineInfo {
         return this;
     }
 
-    public PipelineInfo setBlend(boolean blend) {
-        this.blend = blend;
-        return this;
-    }
-
     public PipelineInfo setDepthTest(boolean depthTest) {
         this.depthTest = depthTest;
         return this;
@@ -40,6 +41,60 @@ public final class PipelineInfo {
 
     public PipelineInfo setDepthFunc(DepthFunc depthFunc) {
         this.depthFunc = depthFunc;
+        return this;
+    }
+
+    public PipelineInfo setBlend(boolean blend) {
+        this.blend = blend;
+        return this;
+    }
+
+    public PipelineInfo setBlendOp(BlendOp blendOp) {
+        blendOpRGB = blendOpAlpha = blendOp;
+        return this;
+    }
+
+    public PipelineInfo setBlendOpRGB(BlendOp blendOpRGB) {
+        this.blendOpRGB = blendOpRGB;
+        return this;
+    }
+
+    public PipelineInfo setBlendOpAlpha(BlendOp blendOpAlpha) {
+        this.blendOpAlpha = blendOpAlpha;
+        return this;
+    }
+
+    public PipelineInfo setBlendFactors(BlendFactor src, BlendFactor dst) {
+        blendSrcRGBFactor = blendSrcAlphaFactor = src;
+        blendDstRGBFactor = blendDstAlphaFactor = dst;
+        return this;
+    }
+
+    public PipelineInfo setBlendFactors(BlendFactor srcRGB, BlendFactor dstRGB, BlendFactor srcAlpha, BlendFactor dstAlpha) {
+        blendSrcRGBFactor = srcRGB;
+        blendDstRGBFactor = dstRGB;
+        blendSrcAlphaFactor = srcAlpha;
+        blendDstAlphaFactor = dstAlpha;
+        return this;
+    }
+
+    public PipelineInfo setBlendSrcRGBFactor(BlendFactor blendSrcRGBFactor) {
+        this.blendSrcRGBFactor = blendSrcRGBFactor;
+        return this;
+    }
+
+    public PipelineInfo setBlendDstRGBFactor(BlendFactor blendDstRGBFactor) {
+        this.blendDstRGBFactor = blendDstRGBFactor;
+        return this;
+    }
+
+    public PipelineInfo setBlendSrcAlphaFactor(BlendFactor blendSrcAlphaFactor) {
+        this.blendSrcAlphaFactor = blendSrcAlphaFactor;
+        return this;
+    }
+
+    public PipelineInfo setBlendDstAlphaFactor(BlendFactor blendDstAlphaFactor) {
+        this.blendDstAlphaFactor = blendDstAlphaFactor;
         return this;
     }
 
@@ -66,16 +121,40 @@ public final class PipelineInfo {
         return clip;
     }
 
-    public boolean isBlend() {
-        return blend;
-    }
-
     public boolean isDepthTest() {
         return depthTest;
     }
 
     public DepthFunc getDepthFunc() {
         return depthFunc;
+    }
+
+    public boolean isBlend() {
+        return blend;
+    }
+
+    public BlendOp getBlendOpRGB() {
+        return blendOpRGB;
+    }
+
+    public BlendOp getBlendOpAlpha() {
+        return blendOpAlpha;
+    }
+
+    public BlendFactor getBlendSrcRGBFactor() {
+        return blendSrcRGBFactor;
+    }
+
+    public BlendFactor getBlendDstRGBFactor() {
+        return blendDstRGBFactor;
+    }
+
+    public BlendFactor getBlendSrcAlphaFactor() {
+        return blendSrcAlphaFactor;
+    }
+
+    public BlendFactor getBlendDstAlphaFactor() {
+        return blendDstAlphaFactor;
     }
 
     public CullMode getCullMode() {
