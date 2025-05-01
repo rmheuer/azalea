@@ -13,10 +13,7 @@ public final class OpenGLTexture2D extends OpenGLTexture implements Texture2D {
     public OpenGLTexture2D(GLStateManager state) {
         super(state);
         setFilters(Filter.NEAREST);
-
-        // Texture already bound from setFilters
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        setWrappingModes(WrappingMode.CLAMP_TO_EDGE);
     }
 
     @Override
@@ -70,6 +67,28 @@ public final class OpenGLTexture2D extends OpenGLTexture implements Texture2D {
     public void setMagFilter(Filter magFilter) {
         state.bindTexture(GL_TEXTURE_2D, id);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, getGlFilter(magFilter));
+    }
+
+    private int getGlWrappingMode(WrappingMode mode) {
+        switch (mode) {
+            case REPEAT: return GL_REPEAT;
+            case REPEAT_MIRRORED: return GL_MIRRORED_REPEAT;
+            case CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
+            default:
+                throw new IllegalArgumentException("Unknown wrapping mode: " + mode);
+        }
+    }
+
+    @Override
+    public void setWrappingModeU(WrappingMode mode) {
+        state.bindTexture(GL_TEXTURE_2D, id);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, getGlWrappingMode(mode));
+    }
+
+    @Override
+    public void setWrappingModeV(WrappingMode mode) {
+        state.bindTexture(GL_TEXTURE_2D, id);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, getGlWrappingMode(mode));
     }
 
     @Override

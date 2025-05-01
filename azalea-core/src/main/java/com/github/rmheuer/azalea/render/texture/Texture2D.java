@@ -10,6 +10,19 @@ import java.nio.ByteBuffer;
 // TODO: Docs for mip-maps
 public interface Texture2D extends Texture, Texture2DRegion {
     /**
+     * How sampling the texture should work when UV coordinates extend outside
+     * the range [0, 1].
+     */
+    enum WrappingMode {
+        /** Texture is repeated, as if tiled in a grid. */
+        REPEAT,
+        /** Same as {@code REPEAT}, but every other tile is mirrored. */
+        REPEAT_MIRRORED,
+        /** UV coordinates are clamped to the range [0, 1]. */
+        CLAMP_TO_EDGE
+    }
+
+    /**
      * Allocates GPU memory for the specified texture size, without uploading
      * pixel data. Any previous texture data will be discarded.
      *
@@ -83,6 +96,30 @@ public interface Texture2D extends Texture, Texture2DRegion {
      * Generates all mip-map levels down to 1x1.
      */
     void generateAllMipMaps();
+
+    /**
+     * Sets the wrapping mode for the U coordinate (horizontal).
+     *
+     * @param mode wrapping mode to set
+     */
+    void setWrappingModeU(WrappingMode mode);
+
+    /**
+     * Sets the wrapping mode for the V coordinate (vertical).
+     *
+     * @param mode wrapping mode to set
+     */
+    void setWrappingModeV(WrappingMode mode);
+
+    /**
+     * Sets the wrapping mode for both the U and V coordinates.
+     *
+     * @param mode wrapping mode to set
+     */
+    default void setWrappingModes(WrappingMode mode) {
+        setWrappingModeU(mode);
+        setWrappingModeV(mode);
+    }
 
     @Override
     default Texture2D getSourceTexture() {
