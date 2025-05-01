@@ -49,8 +49,14 @@ public final class PipelineInfo {
         return this;
     }
 
-    public PipelineInfo setBlendOp(BlendOp blendOp) {
+    public PipelineInfo setBlendOps(BlendOp blendOp) {
         blendOpRGB = blendOpAlpha = blendOp;
+        return this;
+    }
+
+    public PipelineInfo setBlendOps(BlendOp rgb, BlendOp alpha) {
+        blendOpRGB = rgb;
+        blendOpAlpha = alpha;
         return this;
     }
 

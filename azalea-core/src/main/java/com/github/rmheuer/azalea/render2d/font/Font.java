@@ -3,7 +3,6 @@ package com.github.rmheuer.azalea.render2d.font;
 import com.github.rmheuer.azalea.render2d.DrawList2D;
 import com.github.rmheuer.azalea.utils.SafeCloseable;
 import org.joml.Vector2f;
-import org.joml.Vector4f;
 
 /**
  * A font that can be used to render text.

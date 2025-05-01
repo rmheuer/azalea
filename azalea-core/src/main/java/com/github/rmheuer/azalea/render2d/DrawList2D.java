@@ -2,103 +2,276 @@ package com.github.rmheuer.azalea.render2d;
 
 import com.github.rmheuer.azalea.math.MathUtil;
 import com.github.rmheuer.azalea.math.PoseStack;
-import com.github.rmheuer.azalea.math.Transform;
 import com.github.rmheuer.azalea.render.Colors;
+import com.github.rmheuer.azalea.render.Renderer;
+import com.github.rmheuer.azalea.render.mesh.*;
+import com.github.rmheuer.azalea.render.pipeline.BlendFactor;
+import com.github.rmheuer.azalea.render.pipeline.BlendOp;
+import com.github.rmheuer.azalea.render.texture.Texture2D;
 import com.github.rmheuer.azalea.render.texture.Texture2DRegion;
 import com.github.rmheuer.azalea.render2d.font.Font;
+import com.github.rmheuer.azalea.utils.SafeCloseable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class DrawList2D {
-    private static final int CURVE_PRECISION = 8;
-    private static final float[] curveLookup = new float[CURVE_PRECISION * 2 + 2];
+public final class DrawList2D implements SafeCloseable {
+    private static final VertexLayout LAYOUT = new VertexLayout(
+            AttribType.VEC2, // Position
+            AttribType.VEC2, // Texture coordinate
+            AttribType.COLOR_RGBA, // Color
+            AttribType.INT // Texture slot
+    );
 
-    static {
-        for (int i = 0; i <= CURVE_PRECISION; i++) {
-            double angle = i / (double) CURVE_PRECISION * Math.PI / 2;
+    public static final class DrawBatch {
+        public final boolean clipEnabled;
+        public final int clipX, clipY, clipW, clipH;
 
-            curveLookup[i * 2] = (float) Math.cos(angle);
-            curveLookup[i * 2 + 1] = (float) Math.sin(angle);
+        public final boolean blendEnabled;
+        public final BlendOp blendOpRGB, blendOpAlpha;
+        public final BlendFactor blendSrcRGBFactor, blendDstRGBFactor;
+        public final BlendFactor blendSrcAlphaFactor, blendDstAlphaFactor;
+
+        public final List<DrawCmd> drawCommands;
+
+        public DrawBatch(boolean clipEnabled, int clipX, int clipY, int clipW, int clipH, boolean blendEnabled, BlendOp blendOpRGB, BlendOp blendOpAlpha, BlendFactor blendSrcRGBFactor, BlendFactor blendDstRGBFactor, BlendFactor blendSrcAlphaFactor, BlendFactor blendDstAlphaFactor) {
+            this.clipEnabled = clipEnabled;
+            this.clipX = clipX;
+            this.clipY = clipY;
+            this.clipW = clipW;
+            this.clipH = clipH;
+            this.blendEnabled = blendEnabled;
+            this.blendOpRGB = blendOpRGB;
+            this.blendOpAlpha = blendOpAlpha;
+            this.blendSrcRGBFactor = blendSrcRGBFactor;
+            this.blendDstRGBFactor = blendDstRGBFactor;
+            this.blendSrcAlphaFactor = blendSrcAlphaFactor;
+            this.blendDstAlphaFactor = blendDstAlphaFactor;
+
+            drawCommands = new ArrayList<>();
         }
     }
 
-    private final List<DrawVertex> vertices;
-    private final List<Integer> indices;
+    public static final class DrawCmd {
+        public final int indexOffset;
+        public final int indexStart;
+        public final int elementCount;
+        public final Texture2D[] textures;
 
-    private PoseStack poseStack;
+        public DrawCmd(int indexOffset, int indexStart, int elementCount, Texture2D[] textures) {
+            this.indexOffset = indexOffset;
+            this.indexStart = indexStart;
+            this.elementCount = elementCount;
+            this.textures = textures;
+        }
+    }
 
-    private float depth;
+    private final MeshData meshData;
+    private final List<DrawBatch> batches;
+    private boolean finished;
+
+    private DrawBatch currentBatch;
+    private boolean maybeStartNewBatch;
+
+    private int cmdIndexOffset;
+    private int cmdIndexStart;
+    private Texture2D[] cmdTextures;
+
+    private boolean clipEnabled;
+    private int clipX, clipY, clipW, clipH;
+
+    private boolean blendEnabled;
+    private BlendOp blendOpRGB, blendOpAlpha;
+    private BlendFactor blendSrcRGBFactor, blendDstRGBFactor;
+    private BlendFactor blendSrcAlphaFactor, blendDstAlphaFactor;
+
+    private final PoseStack poseStack;
 
     public DrawList2D() {
-        vertices = new ArrayList<>();
-        indices = new ArrayList<>();
+        meshData = new MeshData(LAYOUT, PrimitiveType.TRIANGLES, IndexFormat.UNSIGNED_SHORT);
+        batches = new ArrayList<>();
+        finished = false;
+
+        currentBatch = null;
+        maybeStartNewBatch = true;
+
+        clipEnabled = false;
+        blendEnabled = true;
+        blendOpRGB = blendOpAlpha = BlendOp.ADD;
+        blendSrcRGBFactor = blendSrcAlphaFactor = BlendFactor.SRC_ALPHA;
+        blendDstRGBFactor = blendDstAlphaFactor = BlendFactor.ONE_MINUS_SRC_ALPHA;
+
+        // FIXME: Should get a better solution for transforms than this
         poseStack = new PoseStack();
-        depth = 0;
     }
 
-    public void join(DrawList2D other) {
-        int mark = vertices.size();
-        vertices.addAll(other.vertices);
-        for (int index : other.indices) {
-            indices.add(index + mark);
+    private boolean didPipelineSettingsChange() {
+        if (currentBatch == null)
+            return true;
+
+        if (clipEnabled) {
+            if (!currentBatch.clipEnabled)
+                return true;
+
+            if (clipX != currentBatch.clipX || clipY != currentBatch.clipY || clipW != currentBatch.clipW || clipH != currentBatch.clipH)
+                return true;
+        } else {
+            if (currentBatch.clipEnabled)
+                return true;
         }
+
+        if (blendEnabled) {
+            if (!currentBatch.blendEnabled)
+                return true;
+
+            if (blendOpRGB != currentBatch.blendOpRGB || blendOpAlpha != currentBatch.blendOpAlpha)
+                return true;
+
+            if (blendSrcRGBFactor != currentBatch.blendSrcRGBFactor || blendDstRGBFactor != currentBatch.blendDstRGBFactor)
+                return true;
+            if (blendSrcAlphaFactor != currentBatch.blendSrcAlphaFactor || blendDstAlphaFactor != currentBatch.blendDstAlphaFactor)
+                return true;
+        } else {
+            if (currentBatch.blendEnabled)
+                return true;
+        }
+
+        return false;
     }
 
-    public boolean isEmpty() {
-        return vertices.isEmpty() && indices.isEmpty();
+    private void finishDrawCmd() {
+        currentBatch.drawCommands.add(new DrawCmd(cmdIndexOffset, cmdIndexStart, meshData.getIndexCount() - cmdIndexStart, cmdTextures));
     }
 
-    List<DrawVertex> getVertices() {
-        return vertices;
+    private void startNewDrawCmd() {
+        cmdIndexOffset = meshData.getVertexCount();
+        cmdIndexStart = meshData.getIndexCount();
+        // Reserve one slot for the white texture
+        cmdTextures = new Texture2D[Renderer.MAX_TEXTURE_SLOTS - 1];
     }
 
-    List<Integer> getIndices() {
-        return indices;
+    private void preparePolygon(int vertexCount) {
+        if (maybeStartNewBatch && didPipelineSettingsChange()) {
+            if (currentBatch != null) {
+                finishDrawCmd();
+                batches.add(currentBatch);
+            }
+
+            currentBatch = new DrawBatch(clipEnabled, clipX, clipY, clipW, clipH, blendEnabled, blendOpRGB, blendOpAlpha, blendSrcRGBFactor, blendDstRGBFactor, blendSrcAlphaFactor, blendDstAlphaFactor);
+            startNewDrawCmd();
+        } else {
+            int cmdVertexCount = meshData.getVertexCount() - cmdIndexOffset;
+            if (cmdVertexCount + vertexCount > 65536) {
+                // Reached maximum number of vertices addressable by
+                // UNSIGNED_SHORT index buffer, need to start new draw command
+                finishDrawCmd();
+                startNewDrawCmd();
+            }
+        }
+        maybeStartNewBatch = false;
     }
 
-    public void setDepth(float depth) {
-        this.depth = depth;
+    private int getTextureSlot(Texture2D texture) {
+        for (int i = 0; i < cmdTextures.length; i++) {
+            Texture2D current = cmdTextures[i];
+
+            if (current == texture)
+                return i + 1;
+
+            if (current == null) {
+                cmdTextures[i] = texture;
+                return i + 1;
+            }
+        }
+
+        // Can't fit this texture in this draw command, start a new one
+        finishDrawCmd();
+        startNewDrawCmd();
+        cmdTextures[0] = texture;
+        return 1;
     }
 
-    public void pushTransform() {
-        poseStack.push();
+    private void indices(int... indices) {
+        preparePolygon(indices.length);
+        meshData.putIndicesOffset(meshData.getVertexCount() - cmdIndexOffset, indices);
     }
 
-    public void popTransform() {
-        poseStack.pop();
+    private void vertex(float x, float y, int color) { vertex(x, y, color, 0, null, 0, 0); }
+    private void vertex(float x, float y, int color, int texSlot, Texture2DRegion tex, float u, float v) {
+        if (tex != null) {
+            Vector2f topLeft = tex.getRegionTopLeftUV();
+            Vector2f botRight = tex.getRegionBottomRightUV();
+
+            u = MathUtil.lerp(topLeft.x, botRight.x, u);
+            v = MathUtil.lerp(topLeft.y, botRight.y, v);
+        }
+
+        Vector3f pos = new Vector3f(x, y, 0);
+        poseStack.getMatrix().transformPosition(pos);
+
+        meshData.putVec2(pos.x, pos.y);
+        meshData.putVec2(u, v);
+        meshData.putColorRGBA(color);
+        meshData.putInt(texSlot);
     }
 
     public PoseStack getPoseStack() {
         return poseStack;
     }
 
-    public void applyTransform(Transform tx) {
-        poseStack.applyTransform(tx);
+    // -------------------------------------------
+
+    public void drawLine(float x1, float y1, float x2, float y2, float thickness, int colorRGBA) {
+        Vector2f pos1 = new Vector2f(x1, y1);
+        Vector2f pos2 = new Vector2f(x2, y2);
+
+        Vector2f dir = new Vector2f(pos2)
+                .sub(pos1)
+                .normalize()
+                .mul(thickness / 2.0f);
+        Vector2f perp = new Vector2f(-dir.y, dir.x);
+
+        Vector2f p1 = new Vector2f(pos1).sub(dir).sub(perp);
+        Vector2f p2 = new Vector2f(pos1).sub(dir).add(perp);
+        Vector2f p3 = new Vector2f(pos2).add(dir).add(perp);
+        Vector2f p4 = new Vector2f(pos2).add(dir).sub(perp);
+
+        indices(0, 1, 2, 0, 2, 3);
+        vertex(p1.x, p1.y, colorRGBA);
+        vertex(p2.x, p2.y, colorRGBA);
+        vertex(p3.x, p3.y, colorRGBA);
+        vertex(p4.x, p4.y, colorRGBA);
     }
-    
-    private void vertex(float x, float y, int color) { vertex(x, y, 0, 0, color, null); }
-    private void vertex(float x, float y, float u, float v, int tint, Texture2DRegion tex) {
-        Vector3f pos = new Vector3f(x, y, depth);
-        pos = poseStack.getMatrix().transformPosition(pos);
 
-        if (tex != null) {
-            Vector2f uvMin = tex.getRegionTopLeftUV();
-            Vector2f uvMax = tex.getRegionBottomRightUV();
-
-            u = MathUtil.lerp(uvMin.x, uvMax.x, u);
-            v = MathUtil.lerp(uvMin.y, uvMax.y, v);
-        }
-
-        vertices.add(new DrawVertex(pos, u, v, tint, tex));
+    public void drawRect(float x, float y, float w, float h, float thickness, int colorRGBA) {
+        float x2 = x + w;
+        float y2 = y + h;
+        drawLine(x, y, x2, y, thickness, colorRGBA);
+        drawLine(x2, y, x2, y2, thickness, colorRGBA);
+        drawLine(x2, y2, x, y2, thickness, colorRGBA);
+        drawLine(x, y2, x, y, thickness, colorRGBA);
     }
 
-    private void addIndices(int... i) {
-        int base = vertices.size();
-        for (int index : i) {
-            indices.add(base + index);
-        }
+    public void fillRect(float x, float y, float w, float h, int colorRGBA) {
+        indices(0, 1, 2, 0, 2, 3);
+        vertex(x, y, colorRGBA);
+        vertex(x + w, y, colorRGBA);
+        vertex(x + w, y + h, colorRGBA);
+        vertex(x, y + h, colorRGBA);
+    }
+
+    public void drawImage(float x, float y, float w, float h, Texture2DRegion img) { drawImage(x, y, w, h, img, Colors.RGBA.WHITE, 0, 0, 1, 1); }
+    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, int tintRGBA) { drawImage(x, y, w, h, img, tintRGBA, 0, 0, 1, 1); }
+    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, float u1, float v1, float u2, float v2) { drawImage(x, y, w, h, img, Colors.RGBA.WHITE, u1, v1, u2, v2); }
+    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, int tintRGBA, float u1, float v1, float u2, float v2) {
+        indices(0, 1, 2, 0, 2, 3);
+        int texSlot = getTextureSlot(img.getSourceTexture());
+        vertex(x, y, tintRGBA, texSlot, img, u1, v1);
+        vertex(x + w, y, tintRGBA, texSlot, img, u2, v1);
+        vertex(x + w, y + h, tintRGBA, texSlot, img, u2, v2);
+        vertex(x, y + h, tintRGBA, texSlot, img, u1, v2);
     }
 
     public void drawText(String text, float x, float y, float alignX, float alignY, Font font, int colorRGBA) {
@@ -113,180 +286,85 @@ public class DrawList2D {
         font.draw(this, text, x, y, colorRGBA);
     }
 
-    public void drawLineStrip(Vector2f[] points, float width, int colorRGBA) { drawLineStrip(Arrays.asList(points), width, colorRGBA); }
-    public void drawLineStrip(List<Vector2f> points, float width, int colorRGBA) {
-        Vector2f prevPoint = null;
-        for (Vector2f point : points) {
-            if (prevPoint != null)
-                drawLine(prevPoint.x, prevPoint.y, point.x, point.y, width, colorRGBA);
+    // -------------------------------------------
 
-            prevPoint = point;
+    // Screen coordinates!
+    public void setClipRect(int x, int y, int w, int h) {
+        if (!clipEnabled || clipX != x || clipY != y || clipW != w || clipH != h) {
+            clipEnabled = true;
+            clipX = x;
+            clipY = y;
+            clipW = w;
+            clipH = h;
+            maybeStartNewBatch = true;
         }
     }
 
-    public void fillConvexPolygon(Vector2f[] points, int colorRGBA) { fillConvexPolygon(Arrays.asList(points), colorRGBA); }
-    public void fillConvexPolygon(List<Vector2f> points, int colorRGBA) {
-        int mark = vertices.size();
-        boolean setFirst = false;
-        int lastIndex = -1;
-
-        for (Vector2f point : points) {
-            vertex(point.x, point.y, colorRGBA);
-
-            if (!setFirst) {
-                setFirst = true;
-            } else if (lastIndex < 0) {
-                lastIndex = 1;
-            } else {
-                int temp = lastIndex;
-                lastIndex++;
-                indices.add(mark);
-                indices.add(mark + temp);
-                indices.add(mark + lastIndex);
-            }
+    public void disableClip() {
+        if (clipEnabled) {
+            clipEnabled = false;
+            maybeStartNewBatch = true;
         }
     }
 
-    public void drawLine(float x1, float y1, float x2, float y2, float width, int colorRGBA) {
-        Vector2f pos1 = new Vector2f(x1 + 0.5f, y1 + 0.5f);
-        Vector2f pos2 = new Vector2f(x2 + 0.5f, y2 + 0.5f);
-
-        Vector2f dir = new Vector2f(pos2)
-                .sub(pos1)
-                .normalize()
-                .mul(width / 2.0f);
-        Vector2f perp = new Vector2f(-dir.y, dir.x);
-
-        Vector2f p1 = new Vector2f(pos1).sub(dir).sub(perp);
-        Vector2f p2 = new Vector2f(pos1).sub(dir).add(perp);
-        Vector2f p3 = new Vector2f(pos2).add(dir).add(perp);
-        Vector2f p4 = new Vector2f(pos2).add(dir).sub(perp);
-
-        addIndices(0, 1, 2, 0, 2, 3);
-        vertex(p1.x, p1.y, colorRGBA);
-        vertex(p2.x, p2.y, colorRGBA);
-        vertex(p3.x, p3.y, colorRGBA);
-        vertex(p4.x, p4.y, colorRGBA);
-    }
-
-    public void drawQuad(float x, float y, float w, float h, float width, int colorRGBA) {
-        float x2 = x + w - 1;
-        float y2 = y + h - 1;
-        drawLine(x, y, x2, y, width, colorRGBA);
-        drawLine(x2, y, x2, y2, width, colorRGBA);
-        drawLine(x2, y2, x, y2, width, colorRGBA);
-        drawLine(x, y2, x, y, width, colorRGBA);
-    }
-
-    public void fillQuad(float x, float y, float w, float h, int colorRGBA) {
-        addIndices(0, 1, 2, 0, 2, 3);
-        vertex(x, y, colorRGBA);
-        vertex(x + w, y, colorRGBA);
-        vertex(x + w, y + h, colorRGBA);
-        vertex(x, y + h, colorRGBA);
-    }
-
-    public void drawRoundedQuad(float x, float y, float w, float h, float rad, float width, int colorRGBA) { drawRoundedQuad(x, y, w, h, rad, rad, rad, rad, width, colorRGBA); }
-    public void drawRoundedQuad(float x, float y, float w, float h, float ul, float ur, float ll, float lr, float width, int colorRGBA) {
-        float mx = x + w - 1;
-        float my = y + h - 1;
-
-        // Edges
-        drawLine(x + ul, y, mx - ur, y, width, colorRGBA);
-        drawLine(x, y + ul, x, my - ll, width, colorRGBA);
-        drawLine(x + ll, my, mx - lr, my, width, colorRGBA);
-        drawLine(mx, y + ur, mx, my - lr, width, colorRGBA);
-
-        // Corners
-        for (int i = 1; i <= CURVE_PRECISION; i++) {
-            float lx = curveLookup[i * 2 - 2];
-            float ly = curveLookup[i * 2 - 1];
-            float px = curveLookup[i * 2];
-            float py = curveLookup[i * 2 + 1];
-
-            drawLine(mx - lr + lr * lx, my - lr + lr * ly, mx - lr + lr * px, my - lr + lr * py, width, colorRGBA);
-            drawLine(x + ul - ul * lx, y + ul - ul * ly, x + ul - ul * px, y + ul - ul * py, width, colorRGBA);
-            drawLine(mx - ur + ur * lx, y + ur - ur * ly, mx - ur + ur * px, y + ur - ur * py, width, colorRGBA);
-            drawLine(x + ll - ll * lx, my - ll + ll * ly, x + ll - ll * px, my - ll + ll * py, width, colorRGBA);
+    public void setBlendEnabled(boolean blend) {
+        if (blend != blendEnabled) {
+            blendEnabled = blend;
+            maybeStartNewBatch = true;
         }
     }
 
-    public void fillRoundedQuad(float x, float y, float w, float h, float rad, int colorRGBA) { fillRoundedQuad(x, y, w, h, rad, rad, rad, rad, colorRGBA); }
-    public void fillRoundedQuad(float x, float y, float w, float h, float ul, float ur, float ll, float lr, int colorRGBA) {
-        float maxX = x + w;
-        float maxY = y + h;
-        List<Vector2f> v = new ArrayList<>();
-
-        // Bottom right
-        for (int i = 0; i <= CURVE_PRECISION; i++) {
-            float vx = curveLookup[i * 2] * lr + maxX - lr;
-            float vy = curveLookup[i * 2 + 1] * lr + maxY - lr;
-            v.add(new Vector2f(vx, vy));
+    public void setBlendOps(BlendOp op) { setBlendOps(op, op); }
+    public void setBlendOps(BlendOp rgb, BlendOp alpha) {
+        if (blendOpRGB != rgb || blendOpAlpha != alpha) {
+            blendOpRGB = rgb;
+            blendOpAlpha = alpha;
+            maybeStartNewBatch = true;
         }
+    }
 
-        // Bottom left
-        for (int i = CURVE_PRECISION; i >= 0; i--) {
-            float vx = x + ll - curveLookup[i * 2] * ll;
-            float vy = curveLookup[i * 2 + 1] * ll + maxY - ll;
-            v.add(new Vector2f(vx, vy));
+    public void setBlendFactors(BlendFactor src, BlendFactor dst) { setBlendFactors(src, dst, src, dst); }
+    public void setBlendFactors(BlendFactor srcRGB, BlendFactor dstRGB, BlendFactor srcAlpha, BlendFactor dstAlpha) {
+        if (blendSrcRGBFactor != srcRGB || blendDstRGBFactor != dstRGB || blendSrcAlphaFactor != srcAlpha || blendDstAlphaFactor != dstAlpha) {
+            blendSrcRGBFactor = srcRGB;
+            blendDstRGBFactor = dstRGB;
+            blendSrcAlphaFactor = srcAlpha;
+            blendDstAlphaFactor = dstAlpha;
+            maybeStartNewBatch = true;
         }
+    }
 
-        // Top left
-        for (int i = 0; i <= CURVE_PRECISION; i++) {
-            float vx = x + ur - curveLookup[i * 2] * ul;
-            float vy = y + ur - curveLookup[i * 2 + 1] * ul;
-            v.add(new Vector2f(vx, vy));
+    // -------------------------------------------
+
+    public void finish() {
+        if (finished)
+            throw new IllegalStateException("Already finished");
+
+        if (currentBatch != null) {
+            finishDrawCmd();
+            batches.add(currentBatch);
         }
+        meshData.finish();
 
-        // Top right
-        for (int i = CURVE_PRECISION; i >= 0; i--) {
-            float vx = curveLookup[i * 2] * ur + maxX - ur;
-            float vy = y + ur - curveLookup[i * 2 + 1] * ur;
-            v.add(new Vector2f(vx, vy));
-        }
-
-        fillConvexPolygon(v, colorRGBA);
+        finished = true;
     }
 
-    public void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3, float width, int colorRGBA) {
-        drawLine(x1, y1, x2, y2, width, colorRGBA);
-        drawLine(x2, y2, x3, y3, width, colorRGBA);
-        drawLine(x3, y3, x1, y1, width, colorRGBA);
+    public MeshData getMeshData() {
+        if (!finished)
+            finish();
+
+        return meshData;
     }
 
-    public void fillTriangle(float x1, float y1, float x2, float y2, float x3, float y3, int colorRGBA) {
-        addIndices(0, 1, 2);
-        vertex(x1, y1, colorRGBA);
-        vertex(x2, y2, colorRGBA);
-        vertex(x3, y3, colorRGBA);
+    public List<DrawBatch> getBatches() {
+        if (!finished)
+            finish();
+
+        return batches;
     }
 
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img) { drawImage(x, y, w, h, img, Colors.RGBA.WHITE, 0, 0, 1, 1); }
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, int tintRGBA) { drawImage(x, y, w, h, img, tintRGBA, 0, 0, 1, 1); }
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, float u0, float v0, float u1, float v1) { drawImage(x, y, w, h, img, Colors.RGBA.WHITE, u0, v0, u1, v1); }
-    public void drawImage(float x, float y, float w, float h, Texture2DRegion img, int tintRGBA, float u0, float v0, float u1, float v1) {
-        addIndices(0, 1, 2, 0, 2, 3);
-        vertex(x, y, u0, v0, tintRGBA, img);
-        vertex(x + w, y, u1, v0, tintRGBA, img);
-        vertex(x + w, y + h, u1, v1, tintRGBA, img);
-        vertex(x, y + h, u0, v1, tintRGBA, img);
-    }
-
-    public void drawImageQuad(
-            float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4,
-            Texture2DRegion img,
-            float u0, float v0, float u1, float v1, float u2, float v2, float u3, float v3) {
-        drawImageQuad(x1, y1, x2, y2, x3, y3, x4, y4, img, Colors.RGBA.WHITE, u0, v0, u1, v1, u2, v2, u3, v3);
-    }
-
-    public void drawImageQuad(
-            float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4,
-            Texture2DRegion img, int tintRGBA,
-            float u0, float v0, float u1, float v1, float u2, float v2, float u3, float v3) {
-        addIndices(0, 1, 2, 0, 2, 3);
-        vertex(x1, y1, u0, v0, tintRGBA, img);
-        vertex(x2, y2, u1, v1, tintRGBA, img);
-        vertex(x3, y3, u2, v2, tintRGBA, img);
-        vertex(x4, y4, u3, v3, tintRGBA, img);
+    @Override
+    public void close() {
+        meshData.close();
     }
 }

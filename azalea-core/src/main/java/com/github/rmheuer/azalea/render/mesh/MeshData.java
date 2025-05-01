@@ -44,7 +44,7 @@ public final class MeshData implements SafeCloseable {
      *
      * @param i index to add
      */
-    public void index(int i) {
+    public void putIndex(int i) {
         indices.putIndex(vertices.getVertexCount() + i);
     }
 
@@ -54,7 +54,7 @@ public final class MeshData implements SafeCloseable {
      *
      * @param i index to add
      */
-    public void indexAbsolute(int i) {
+    public void putIndexAbsolute(int i) {
         indices.putIndex(i);
     }
 
@@ -65,7 +65,7 @@ public final class MeshData implements SafeCloseable {
      *
      * @param indices indices to add
      */
-    public void indices(int... indices) {
+    public void putIndices(int... indices) {
         int base = vertices.getVertexCount();
         this.indices.putIndicesOffset(base, indices);
     }
@@ -76,8 +76,18 @@ public final class MeshData implements SafeCloseable {
      *
      * @param indices indices to add
      */
-    public void indicesAbsolute(int... indices) {
+    public void putIndicesAbsolute(int... indices) {
         this.indices.putIndices(indices);
+    }
+
+    /**
+     * Adds several indices to the index array. These indices are relative to
+     * the start of the vertex array, with the provided offset added to each.
+     *
+     * @param indices indices to add
+     */
+    public void putIndicesOffset(int offset, int... indices) {
+        this.indices.putIndicesOffset(offset, indices);
     }
 
     /**
@@ -200,5 +210,14 @@ public final class MeshData implements SafeCloseable {
      */
     public int getVertexCount() {
         return vertices.getVertexCount();
+    }
+
+    /**
+     * Gets the number of indices in this data.
+     *
+     * @return index count
+     */
+    public int getIndexCount() {
+        return indices.getIndexCount();
     }
 }
