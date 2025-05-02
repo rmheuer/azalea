@@ -92,6 +92,14 @@ public final class AABB {
         }
     }
 
+    public boolean intersects(AABB other) {
+        boolean x = (minX < other.maxX && maxX > other.minX);
+        boolean y = (minY < other.maxY && maxY > other.minY);
+        boolean z = (minZ < other.maxZ && maxZ > other.minZ);
+
+        return x && y && z;
+    }
+
     public boolean intersectsIgnoringAxis(AABB other, Axis ignoredAxis) {
         boolean x = (minX < other.maxX && maxX > other.minX);
         boolean y = (minY < other.maxY && maxY > other.minY);
