@@ -122,10 +122,10 @@ public final class AABB {
         float max = getMax(axis);
         float otherMin = other.getMin(axis);
         float otherMax = other.getMax(axis);
-        if (movement > 0 && otherMin >= max) {
+        if (movement > 0 && otherMin + Math.ulp(otherMin) >= max) {
             movement = Math.min(movement, otherMin - max);
         }
-        if (movement < 0 && otherMax <= min) {
+        if (movement < 0 && otherMax - Math.ulp(otherMax) <= min) {
             movement = Math.max(movement, otherMax - min);
         }
 
