@@ -60,6 +60,26 @@ public final class Colors {
             return r << SHIFT_RED | g << SHIFT_GREEN | b << SHIFT_BLUE;
         }
 
+        public static Vector3f toFloats(int rgb) { return toFloats(rgb, new Vector3f()); }
+        public static Vector3f toFloats(int rgb, Vector3f dest) {
+            float r = getRed(rgb) / 255.0f;
+            float g = getGreen(rgb) / 255.0f;
+            float b = getBlue(rgb) / 255.0f;
+
+            dest.set(r, g, b);
+            return dest;
+        }
+
+        public static Vector3i toInts(int rgb) { return toInts(rgb, new Vector3i()); }
+        public static Vector3i toInts(int rgb, Vector3i dest) {
+            int r = getRed(rgb);
+            int g = getGreen(rgb);
+            int b = getBlue(rgb);
+
+            dest.set(r, g, b);
+            return dest;
+        }
+
         /**
          * Creates an RGBA color with the specified RGB and alpha values.
          * @param rgb RGB components
@@ -125,12 +145,26 @@ public final class Colors {
             return RGB.withAlpha(rgb, 255);
         }
 
-        public static Vector4i toInts(int rgba) {
-            return new Vector4i(getRed(rgba), getGreen(rgba), getBlue(rgba), getAlpha(rgba));
-        }
+        public static Vector4f toFloats(int rgba) { return toFloats(rgba, new Vector4f()); }
+        public static Vector4f toFloats(int rgba, Vector4f dest) {
+            float r = getRed(rgba) / 255.0f;
+            float g = getGreen(rgba) / 255.0f;
+            float b = getBlue(rgba) / 255.0f;
+            float a = getAlpha(rgba) / 255.0f;
 
-        public static Vector4f toFloats(int rgba) {
-            return new Vector4f(getRed(rgba) / 255.0f, getGreen(rgba) / 255.0f, getBlue(rgba) / 255.0f, getAlpha(rgba) / 255.0f);
+            dest.set(r, g, b, a);
+            return dest;
+        }
+        
+        public static Vector4i toInts(int rgba) { return toInts(rgba, new Vector4i()); }
+        public static Vector4i toInts(int rgba, Vector4i dest) {
+            int r = getRed(rgba);
+            int g = getGreen(rgba);
+            int b = getBlue(rgba);
+            int a = getAlpha(rgba);
+
+            dest.set(r, g, b, a);
+            return dest;
         }
 
         /** @return the alpha component of the color */
