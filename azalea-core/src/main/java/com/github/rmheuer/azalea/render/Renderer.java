@@ -11,6 +11,7 @@ import com.github.rmheuer.azalea.render.pipeline.PipelineInfo;
 import com.github.rmheuer.azalea.render.shader.ShaderProgram;
 import com.github.rmheuer.azalea.render.shader.ShaderStage;
 import com.github.rmheuer.azalea.render.texture.Bitmap;
+import com.github.rmheuer.azalea.render.texture.BitmapRegion;
 import com.github.rmheuer.azalea.render.texture.Texture2D;
 import com.github.rmheuer.azalea.render.texture.TextureCubeMap;
 import com.github.rmheuer.azalea.utils.SafeCloseable;
@@ -156,6 +157,18 @@ public interface Renderer extends SafeCloseable {
      */
     Texture2D createTexture2D();
 
+    /**
+     * Creates a {@code Texture2D} and uploads image data to it.
+     *
+     * @param img bitmap data to upload
+     * @return the created texture
+     */
+    default Texture2D createTexture2D(BitmapRegion img) {
+        Texture2D tex = createTexture2D();
+        tex.setData(img);
+        return tex;
+    }
+    
     /**
      * Creates a {@code Texture2D} and loads its data from an
      * {@code InputStream}. The stream is decoded using
