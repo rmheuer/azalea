@@ -262,6 +262,22 @@ public final class DrawList2D implements SafeCloseable {
         vertex(x, y + h, colorRGBA);
     }
 
+    public void fillRectVGradient(float x, float y, float w, float h, int topRGBA, int bottomRGBA) {
+        indices(0, 1, 2, 0, 2, 3);
+        vertex(x, y, topRGBA);
+        vertex(x + w, y, topRGBA);
+        vertex(x + w, y + h, bottomRGBA);
+        vertex(x, y + h, bottomRGBA);
+    }
+
+    public void fillRectHGradient(float x, float y, float w, float h, int leftRGBA, int rightRGBA) {
+        indices(0, 1, 2, 0, 2, 3);
+        vertex(x, y, leftRGBA);
+        vertex(x + w, y, rightRGBA);
+        vertex(x + w, y + h, rightRGBA);
+        vertex(x, y + h, leftRGBA);
+    }
+
     public void drawImage(float x, float y, float w, float h, Texture2DRegion img) { drawImage(x, y, w, h, img, Colors.RGBA.WHITE, 0, 0, 1, 1); }
     public void drawImage(float x, float y, float w, float h, Texture2DRegion img, int tintRGBA) { drawImage(x, y, w, h, img, tintRGBA, 0, 0, 1, 1); }
     public void drawImage(float x, float y, float w, float h, Texture2DRegion img, float u1, float v1, float u2, float v2) { drawImage(x, y, w, h, img, Colors.RGBA.WHITE, u1, v1, u2, v2); }
