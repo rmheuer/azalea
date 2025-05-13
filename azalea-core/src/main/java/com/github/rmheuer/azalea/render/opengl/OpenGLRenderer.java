@@ -38,6 +38,12 @@ public final class OpenGLRenderer implements Renderer {
     private final Framebuffer defaultFramebuffer;
 
     public OpenGLRenderer(OpenGLWindow window) {
+        System.out.println("OpenGLRenderer:");
+        System.out.println("  Vendor: " + glGetString(GL_VENDOR));
+        System.out.println("  Renderer: " + glGetString(GL_RENDERER));
+        System.out.println("  Version: " + glGetString(GL_VERSION));
+        System.out.println("  GLSL version: " + glGetString(GL_SHADING_LANGUAGE_VERSION));
+        
         Vector2i size = window.getFramebufferSize();
         state = new GLStateManager(size);
         setClipRect(0, 0, size.x, size.y);
