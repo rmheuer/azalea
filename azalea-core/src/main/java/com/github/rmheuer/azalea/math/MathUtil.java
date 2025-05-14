@@ -122,6 +122,14 @@ public final class MathUtil {
         return b + (a - b) * (float) Math.exp(-decay * dt);
     }
 
+    public static float floorMod(float x, float y) {
+        return x - (float) Math.floor(x / y) * y;
+    }
+    
+    public static float wrap(float val, float min, float max) {
+        return floorMod(val - min, max - min) + min;
+    }
+
     private MathUtil() {
         throw new AssertionError();
     }
