@@ -81,6 +81,14 @@ public interface Window extends SafeCloseable {
     void registerEvents(EventBus bus);
 
     /**
+     * Gets whether this window is the currently focused window in the user's
+     * desktop.
+     *
+     * @return whether the window is focused
+     */
+    boolean isFocused();
+
+    /**
      * Creates a window compatible with the current platform.
      *
      * @param settings settings for the window to create

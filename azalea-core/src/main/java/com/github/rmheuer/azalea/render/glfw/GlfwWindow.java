@@ -3,9 +3,11 @@ package com.github.rmheuer.azalea.render.glfw;
 import com.github.rmheuer.azalea.event.EventBus;
 import com.github.rmheuer.azalea.input.keyboard.*;
 import com.github.rmheuer.azalea.input.mouse.*;
+import com.github.rmheuer.azalea.render.Renderer;
 import com.github.rmheuer.azalea.render.Window;
 import com.github.rmheuer.azalea.render.WindowSettings;
 import com.github.rmheuer.azalea.render.event.WindowCloseEvent;
+import com.github.rmheuer.azalea.render.event.WindowFocusEvent;
 import com.github.rmheuer.azalea.render.event.WindowFramebufferSizeEvent;
 import com.github.rmheuer.azalea.render.event.WindowSizeEvent;
 import com.github.rmheuer.azalea.utils.BiMap;
@@ -181,6 +183,14 @@ public abstract class GlfwWindow implements Window, Keyboard, Mouse {
         glfwSetCharCallback(handle, (window, c) -> {
             bus.dispatchEvent(new CharTypeEvent(this, (char) c));
         });
+        glfwSetWindowFocusCallback(handle, (window, focused) -> {
+            bus.dispatchEvent(new WindowFocusEvent(this, focused));
+        });
+    }
+
+    @Override
+    public boolean isFocused() {
+        return glfwGetWindowAttrib(handle, GLFW_FOCUSED) == GLFW_TRUE;
     }
 
     @Override
