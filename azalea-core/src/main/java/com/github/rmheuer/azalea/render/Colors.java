@@ -31,6 +31,10 @@ public final class Colors {
 
         /** @return the blue component of the color */
         public static int getBlue(int rgba) { return (rgba & MASK_BLUE) >>> SHIFT_BLUE; }
+
+        public static int setRed(int rgba, int red) { return (rgba & ~MASK_RED) | (red << SHIFT_RED); }
+        public static int setGreen(int rgba, int green) { return (rgba & ~MASK_GREEN) | (green << SHIFT_GREEN); }
+        public static int setBlue(int rgba, int blue) { return (rgba & ~MASK_BLUE) | (blue << SHIFT_BLUE); }
     }
 
     /**
@@ -169,6 +173,8 @@ public final class Colors {
 
         /** @return the alpha component of the color */
         public static int getAlpha(int rgba) { return (rgba & MASK_ALPHA) >>> SHIFT_ALPHA; }
+
+        public static int setAlpha(int rgba, int alpha) { return (rgba & ~MASK_ALPHA) | (alpha << SHIFT_ALPHA); }
 
         /** @return the rgb components of the color */
         public static int getRGB(int rgba) {
