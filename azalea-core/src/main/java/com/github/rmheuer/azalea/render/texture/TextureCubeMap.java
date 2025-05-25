@@ -2,6 +2,8 @@ package com.github.rmheuer.azalea.render.texture;
 
 import com.github.rmheuer.azalea.math.CubeFace;
 
+import java.io.InputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
@@ -29,6 +31,21 @@ public interface TextureCubeMap extends Texture {
      * @param data data to upload
      */
     void setFaceData(CubeFace face, BitmapRegion data);
+
+    /**
+     * Loads the bitmap data for one face from an {@code InputStream} and
+     * uploads it to the GPU. The stream is decoded using
+     * {@link Bitmap#decode(InputStream)}.
+     *
+     * @param face cube face data is for
+     * @param in input stream to read image data from
+     * @throws IOException if an IO error occurs while decoding the image data
+     */
+    default void setFaceData(CubeFace face, InputStream in) throws IOException {
+        try (Bitmap bitmap = Bitmap.decode(in)) {
+            setFaceData(face, bitmap);
+        }
+    }
 
     /**
      * Uploads a set of bitmap data for one face to the GPU.
