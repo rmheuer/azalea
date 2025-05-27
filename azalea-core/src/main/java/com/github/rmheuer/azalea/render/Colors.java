@@ -64,6 +64,38 @@ public final class Colors {
             return r << SHIFT_RED | g << SHIFT_GREEN | b << SHIFT_BLUE;
         }
 
+        /**
+         * Converts from HSV to RGB color space.
+         *
+         * @param h hue from 0 to 360
+         * @param s saturation from 0 to 1
+         * @param v value from 0 to 1
+         * @return RGB color
+         */
+        public static int fromHSV(float h, float s, float v) {
+            if (s == 0) {
+                return fromFloats(v, v, v);
+            }
+
+            h /= 60;
+            int i = (int) Math.floor(h);
+            float f = h - i;
+            float p = v * (1 - s);
+            float q = v * (1 - s * f);
+            float t = v * (1 - s * (1 - f));
+
+            float r, g, b;
+            switch (i) {
+                case 0: r = v; g = t; b = p; break;
+                case 1: r = q; g = v; b = p; break;
+                case 2: r = p; g = v; b = t; break;
+                case 3: r = p; g = q; b = v; break;
+                case 4: r = t; g = p; b = v; break;
+                default: r = v; g = p; b = q; break;
+            }
+            return fromFloats(r, g, b);
+        }
+
         public static Vector3f toFloats(int rgb) { return toFloats(rgb, new Vector3f()); }
         public static Vector3f toFloats(int rgb, Vector3f dest) {
             float r = getRed(rgb) / 255.0f;
@@ -147,6 +179,14 @@ public final class Colors {
 
         public static int fromRGB(int rgb) {
             return RGB.withAlpha(rgb, 255);
+        }
+
+        public static int fromHSV(float h, float s, float v) {
+            return RGB.withAlpha(RGB.fromHSV(h, s, v), 255);
+        }
+
+        public static int fromHSV(float h, float s, float v, float a) {
+            return RGB.withAlpha(RGB.fromHSV(h, s, v), (int) (a * 255));
         }
 
         public static Vector4f toFloats(int rgba) { return toFloats(rgba, new Vector4f()); }
